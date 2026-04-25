@@ -6,7 +6,7 @@
     "install-all": "cd server && npm install && cd ../client && npm install",
     "build": "cd client && npm run build",
     "start": "cd server && node server.js",
-    "render-build": "cd server && npm install && cd ../client && npm install && npm run build"
+    "render-build": "cd server && npm install && cd ../client && npm install --include=dev && npm run build"
   },
   "keywords": ["lms", "education", "mern"],
   "author": "Maganti Praveen",
