@@ -5,6 +5,7 @@ const crypto = require('crypto');
 const User = require('../models/User');
 const { protect } = require('../middleware/auth');
 const { sendWelcomeEmail, sendResetPasswordEmail } = require('../utils/emailService');
+const { createNotification } = require('../utils/notificationHelper');
 
 const generateToken = (id) => {
   return jwt.sign({ id }, process.env.JWT_SECRET, { expiresIn: '30d' });
@@ -23,10 +24,10 @@ router.post('/register', async (req, res) => {
     }
     const user = await User.create({ name, email, password });
 
-    // Send welcome email (non-blocking — don't fail registration if email fails)
-    sendWelcomeEmail(name, email).catch((err) => {
-      console.error('Welcome email failed:', err.message);
-    });
+    // Send welcome email (non-blocking)
+    sendWelcomeEmail(name, email).catch((err) => console.error('Welcome email failed:', err.message));
+    // Welcome notification
+    createNotification(user._id, 'welcome', 'Welcome to VedhaEduSpark! 🎉', 'Start your learning journey. Explore courses and practice coding problems.', '/dashboard');
 
     res.status(201).json({
       _id: user._id,

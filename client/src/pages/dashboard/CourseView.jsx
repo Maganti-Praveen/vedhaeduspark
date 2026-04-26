@@ -220,16 +220,39 @@ const CourseView = () => {
                       />
                     </div>
                   )}
-                  {currentContent.type === 'pdf' && currentContent.pdfUrl && (
-                    <div className="space-y-3">
-                      <a href={currentContent.pdfUrl} target="_blank" rel="noopener noreferrer"
-                        className="btn-primary !py-2.5 !px-6 !text-sm inline-flex">
-                        📄 Open PDF in New Tab
-                      </a>
-                      <iframe src={currentContent.pdfUrl} title={currentContent.title}
-                        className="w-full rounded-xl" style={{ height: 600, border: '1px solid var(--gray-200)' }} />
-                    </div>
-                  )}
+                  {currentContent.type === 'pdf' && currentContent.pdfUrl && (() => {
+                    const url = currentContent.pdfUrl;
+                    // Google Drive links → use native Drive embed (read-only preview)
+                    const driveMatch = url.match(/\/d\/([a-zA-Z0-9_-]+)/);
+                    if (driveMatch) {
+                      return (
+                        <div className="space-y-2">
+                          <div className="text-xs font-medium px-1" style={{ color: 'var(--gray-400)' }}>📄 Read-only preview</div>
+                          <iframe
+                            src={`https://drive.google.com/file/d/${driveMatch[1]}/preview`}
+                            title={currentContent.title}
+                            className="w-full rounded-xl"
+                            style={{ height: 600, border: '1px solid var(--gray-200)' }}
+                            allow="autoplay"
+                            sandbox="allow-scripts allow-same-origin allow-popups"
+                          />
+                        </div>
+                      );
+                    }
+                    // Direct URLs (Cloudinary etc.) → Google Docs Viewer
+                    return (
+                      <div className="space-y-2">
+                        <div className="text-xs font-medium px-1" style={{ color: 'var(--gray-400)' }}>📄 Read-only preview</div>
+                        <iframe
+                          src={`https://docs.google.com/viewer?url=${encodeURIComponent(url)}&embedded=true`}
+                          title={currentContent.title}
+                          className="w-full rounded-xl"
+                          style={{ height: 600, border: '1px solid var(--gray-200)' }}
+                          sandbox="allow-scripts allow-same-origin allow-popups"
+                        />
+                      </div>
+                    );
+                  })()}
                   {currentContent.type === 'notes' && (
                     <div className="prose prose-sm max-w-none leading-relaxed whitespace-pre-wrap" style={{ color: 'var(--gray-700)' }}>
                       {currentContent.contentText || 'No content yet.'}

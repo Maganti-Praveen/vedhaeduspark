@@ -1,40 +1,68 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { FaStar, FaArrowRight, FaSearch, FaClock, FaUsers, FaCheck } from 'react-icons/fa';
+import { FaStar, FaArrowRight, FaSearch, FaClock, FaUsers, FaCheck, FaTimes } from 'react-icons/fa';
+import { HiX } from 'react-icons/hi';
 import { courseAPI, enrollmentAPI } from '../../services/api';
 import { useAuth } from '../../contexts/AuthContext';
 import { SkeletonCard } from '../../components/common/Skeleton';
 import toast from 'react-hot-toast';
 
 const fadeUp = {
-  hidden: { opacity: 0, y: 30 },
-  visible: (i = 0) => ({ opacity: 1, y: 0, transition: { delay: i * 0.08, duration: 0.5 } }),
+  hidden: { opacity: 0, y: 20 },
+  visible: (i = 0) => ({ opacity: 1, y: 0, transition: { delay: i * 0.1, duration: 0.5 } }),
 };
 
 const Courses = () => {
+  const navigate = useNavigate();
+  const { user } = useAuth();
   const [courses, setCourses] = useState([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState('All');
   const [search, setSearch] = useState('');
-  const { user } = useAuth();
-  const navigate = useNavigate();
+  // Enrollment popup state
+  const [enrollPopup, setEnrollPopup] = useState(null); // course object
+  const [couponCode, setCouponCode] = useState('');
+  const [enrolling, setEnrolling] = useState(false);
 
   useEffect(() => {
     courseAPI.getAll().then(({ data }) => { setCourses(data); setLoading(false); }).catch(() => setLoading(false));
   }, []);
 
   const levels = ['All', 'Beginner', 'Intermediate', 'Advanced'];
-  const filtered = courses.filter((c) => {
+  const filtered = courses.filter(c => {
     const matchLevel = filter === 'All' || c.level === filter;
     const matchSearch = c.title.toLowerCase().includes(search.toLowerCase());
     return matchLevel && matchSearch;
   });
 
-  const handleEnroll = async (courseId) => {
+  const handleEnrollClick = (course) => {
     if (!user) { toast.error('Please login to enroll'); navigate('/login'); return; }
-    try { await enrollmentAPI.enroll(courseId); toast.success('Enrolled successfully!'); navigate('/dashboard'); }
+    // If free → enroll directly
+    if (course.isFree !== false || !course.price) {
+      enrollDirect(course._id);
+    } else {
+      // Paid → show popup
+      setEnrollPopup(course);
+      setCouponCode('');
+    }
+  };
+
+  const enrollDirect = async (courseId) => {
+    try { await enrollmentAPI.enroll(courseId); toast.success('Enrolled successfully!'); navigate('/dashboard/my-courses'); }
     catch (err) { toast.error(err.response?.data?.message || 'Enrollment failed'); }
+  };
+
+  const handleCouponEnroll = async () => {
+    if (!couponCode.trim()) return toast.error('Enter a coupon code');
+    setEnrolling(true);
+    try {
+      await enrollmentAPI.enroll(enrollPopup._id, couponCode.trim());
+      toast.success('Enrolled successfully!');
+      setEnrollPopup(null);
+      navigate('/dashboard/my-courses');
+    } catch (err) { toast.error(err.response?.data?.message || 'Invalid coupon'); }
+    setEnrolling(false);
   };
 
   return (
@@ -92,6 +120,11 @@ const Courses = () => {
                         course.level === 'Beginner' ? 'badge-easy' :
                         course.level === 'Intermediate' ? 'badge-medium' : 'badge-hard'
                       }`}>{course.level}</span>
+                      {course.isFree === false && course.price > 0 ? (
+                        <span className="px-3 py-1 rounded-full text-xs font-bold" style={{ background: '#fef3c7', color: '#d97706' }}>₹{course.price}</span>
+                      ) : (
+                        <span className="px-3 py-1 rounded-full text-xs font-bold" style={{ background: '#dcfce7', color: '#16a34a' }}>Free</span>
+                      )}
                     </div>
                     <h3 className="text-xl font-bold mb-3" style={{ color: 'var(--gray-900)' }}>{course.title}</h3>
                     <p className="text-[0.95rem] leading-relaxed mb-5" style={{ color: 'var(--gray-500)' }}>{course.description}</p>
@@ -118,7 +151,7 @@ const Courses = () => {
                     </div>
 
                     <div className="flex items-center justify-between pt-5" style={{ borderTop: '1px solid var(--gray-200)' }}>
-                      <button onClick={() => handleEnroll(course._id)} className="btn-outline !py-3 !px-7 text-sm">
+                      <button onClick={() => handleEnrollClick(course)} className="btn-outline !py-3 !px-7 text-sm">
                         <FaArrowRight /> Enroll Now
                       </button>
                       <span className="flex items-center gap-1.5 text-sm font-medium" style={{ color: 'var(--gray-500)' }}>
@@ -136,6 +169,65 @@ const Courses = () => {
             <div className="text-6xl mb-4">📚</div>
             <h3 className="text-xl font-bold mb-2" style={{ color: 'var(--gray-900)' }}>No courses found</h3>
             <p style={{ color: 'var(--gray-500)' }}>Try adjusting your filters or search term.</p>
+          </div>
+        )}
+
+        {/* ============ PAID COURSE ENROLLMENT POPUP ============ */}
+        {enrollPopup && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+            <div className="absolute inset-0 bg-black/50" onClick={() => setEnrollPopup(null)} />
+            <motion.div initial={{ opacity: 0, scale: 0.9, y: 20 }} animate={{ opacity: 1, scale: 1, y: 0 }}
+              className="relative bg-white rounded-[20px] shadow-2xl w-full max-w-md overflow-hidden"
+              style={{ border: '1px solid var(--gray-200)' }}>
+              {/* Header gradient */}
+              <div className="h-2" style={{ background: 'linear-gradient(90deg, #2563eb, #7c3aed, #f59e0b)' }} />
+              <div className="p-6 space-y-5">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h3 className="font-bold text-lg" style={{ color: 'var(--gray-900)' }}>💳 Payment Required</h3>
+                    <p className="text-xs" style={{ color: 'var(--gray-500)' }}>{enrollPopup.title}</p>
+                  </div>
+                  <button onClick={() => setEnrollPopup(null)} className="p-2 rounded-lg hover:bg-gray-100"><HiX style={{ color: 'var(--gray-400)' }} /></button>
+                </div>
+
+                {/* Price */}
+                <div className="text-center p-4 rounded-xl" style={{ background: 'linear-gradient(135deg, #dbeafe, #ede9fe)' }}>
+                  <div className="text-3xl font-extrabold" style={{ color: '#2563eb' }}>₹{enrollPopup.price}</div>
+                  <p className="text-xs font-medium mt-1" style={{ color: '#6366f1' }}>One-time payment</p>
+                </div>
+
+                {/* QR Code */}
+                {enrollPopup.qrCodeImage && (
+                  <div className="text-center">
+                    <p className="text-xs font-semibold mb-2" style={{ color: 'var(--gray-700)' }}>Scan to Pay</p>
+                    <img src={enrollPopup.qrCodeImage} alt="Payment QR Code" className="mx-auto rounded-xl shadow-md" style={{ maxWidth: 200, border: '1px solid var(--gray-200)' }} />
+                    <p className="text-[0.65rem] mt-2 leading-relaxed" style={{ color: 'var(--gray-400)' }}>
+                      Send <strong>₹{enrollPopup.price}</strong> to the above QR code.<br />
+                      You'll receive a coupon code to your mail within 24hrs.
+                    </p>
+                  </div>
+                )}
+
+                {/* Coupon Input */}
+                <div>
+                  <label className="block text-xs font-semibold mb-1.5" style={{ color: 'var(--gray-700)' }}>Enter Coupon Code</label>
+                  <input value={couponCode} onChange={e => setCouponCode(e.target.value.toUpperCase())}
+                    className="input-light !text-sm font-mono tracking-wider text-center"
+                    placeholder="e.g. VES-A3B7D1"
+                    onKeyDown={e => { if (e.key === 'Enter') handleCouponEnroll(); }}
+                  />
+                </div>
+
+                <button onClick={handleCouponEnroll} disabled={enrolling || !couponCode.trim()}
+                  className="btn-primary w-full !py-3 disabled:opacity-50">
+                  {enrolling ? 'Validating...' : '✨ Enroll with Coupon'}
+                </button>
+
+                <p className="text-[0.6rem] text-center leading-relaxed" style={{ color: 'var(--gray-400)' }}>
+                  Don't have a coupon? Contact admin after payment to receive one.
+                </p>
+              </div>
+            </motion.div>
           </div>
         )}
       </div>

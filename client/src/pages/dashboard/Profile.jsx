@@ -1,9 +1,9 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
-import { FaUser, FaEnvelope, FaShieldAlt, FaCalendar, FaPen, FaSave, FaTimes, FaUniversity, FaCode, FaGraduationCap, FaFire, FaTrophy, FaMedal } from 'react-icons/fa';
+import { FaUser, FaEnvelope, FaShieldAlt, FaCalendar, FaPen, FaSave, FaTimes, FaUniversity, FaCode, FaGraduationCap, FaFire, FaTrophy, FaMedal, FaCamera, FaUpload } from 'react-icons/fa';
 import { HiCheckCircle, HiCode, HiAcademicCap, HiTrendingUp } from 'react-icons/hi';
 import { useAuth } from '../../contexts/AuthContext';
-import { authAPI, submissionAPI, enrollmentAPI } from '../../services/api';
+import { authAPI, submissionAPI, enrollmentAPI, uploadAPI } from '../../services/api';
 import toast from 'react-hot-toast';
 
 const fadeUp = {
@@ -33,6 +33,12 @@ const Profile = () => {
   const [stats, setStats] = useState(null);
   const [enrollments, setEnrollments] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [uploading, setUploading] = useState(false);
+  const [showCamera, setShowCamera] = useState(false);
+  const fileRef = useRef(null);
+  const videoRef = useRef(null);
+  const canvasRef = useRef(null);
+  const streamRef = useRef(null);
 
   useEffect(() => {
     Promise.all([
@@ -76,6 +82,49 @@ const Profile = () => {
       toast.error(err.response?.data?.message || 'Update failed');
     }
     setSaving(false);
+  };
+
+  const handleAvatarUpload = async (file) => {
+    if (!file) return;
+    if (!file.type.startsWith('image/')) return toast.error('Only images allowed');
+    if (file.size > 5 * 1024 * 1024) return toast.error('Max 5MB');
+    setUploading(true);
+    try {
+      const { data } = await uploadAPI.avatar(file);
+      setForm({ ...form, avatar: data.url });
+      toast.success('Photo uploaded!');
+    } catch { toast.error('Upload failed'); }
+    setUploading(false);
+  };
+
+  const openCamera = async () => {
+    setShowCamera(true);
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user', width: 400, height: 400 } });
+      streamRef.current = stream;
+      if (videoRef.current) videoRef.current.srcObject = stream;
+    } catch { toast.error('Camera access denied'); setShowCamera(false); }
+  };
+
+  const capturePhoto = () => {
+    const video = videoRef.current;
+    const canvas = canvasRef.current;
+    if (!video || !canvas) return;
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+    canvas.getContext('2d').drawImage(video, 0, 0);
+    canvas.toBlob(async (blob) => {
+      if (blob) {
+        const file = new File([blob], 'profile-photo.jpg', { type: 'image/jpeg' });
+        closeCamera();
+        await handleAvatarUpload(file);
+      }
+    }, 'image/jpeg', 0.85);
+  };
+
+  const closeCamera = () => {
+    if (streamRef.current) streamRef.current.getTracks().forEach(t => t.stop());
+    setShowCamera(false);
   };
 
   const toggleSkill = (skill) => {
@@ -240,20 +289,12 @@ const Profile = () => {
             { label: 'Easy', value: displayUser?.progressStats?.easy || 0, barColor: '#22c55e', bgColor: '#dcfce7' },
             { label: 'Medium', value: displayUser?.progressStats?.medium || 0, barColor: '#f59e0b', bgColor: '#fef3c7' },
             { label: 'Hard', value: displayUser?.progressStats?.hard || 0, barColor: '#ef4444', bgColor: '#fee2e2' },
-          ].map((d, i) => {
-            const total = (displayUser?.progressStats?.easy || 0) + (displayUser?.progressStats?.medium || 0) + (displayUser?.progressStats?.hard || 0);
-            const pct = total > 0 ? Math.round((d.value / total) * 100) : 0;
-            return (
-              <div key={i} className="text-center p-4 rounded-xl" style={{ background: d.bgColor }}>
-                <div className="text-3xl font-bold mb-1" style={{ color: d.barColor }}>{d.value}</div>
-                <div className="text-xs font-semibold mb-2" style={{ color: d.barColor }}>{d.label}</div>
-                <div className="w-full h-1.5 rounded-full bg-white/70">
-                  <div className="h-full rounded-full transition-all" style={{ width: `${pct}%`, background: d.barColor }} />
-                </div>
-                <div className="text-[0.65rem] mt-1 font-medium" style={{ color: d.barColor }}>{pct}%</div>
-              </div>
-            );
-          })}
+          ].map((d, i) => (
+            <div key={i} className="text-center p-4 rounded-xl" style={{ background: d.bgColor }}>
+              <div className="text-3xl font-bold" style={{ color: d.barColor }}>{d.value}</div>
+              <div className="text-xs font-semibold mt-1" style={{ color: d.barColor }}>{d.label}</div>
+            </div>
+          ))}
         </div>
       </motion.div>
 
@@ -275,13 +316,50 @@ const Profile = () => {
             </div>
 
             <div className="p-6 space-y-5">
+              {/* Profile Photo Upload */}
+              <div>
+                <label className="block text-sm font-semibold mb-2" style={{ color: 'var(--gray-700)' }}>Profile Photo</label>
+                <div className="flex items-center gap-4">
+                  <div className="relative w-20 h-20 rounded-xl overflow-hidden flex-shrink-0" style={{ background: 'var(--gray-100)' }}>
+                    {form.avatar ? (
+                      <img src={form.avatar} alt="Avatar" className="w-full h-full object-cover" />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center text-2xl font-bold text-white" style={{ background: 'var(--gradient-blue)' }}>
+                        {form.name?.charAt(0)?.toUpperCase() || '?'}
+                      </div>
+                    )}
+                    {uploading && (
+                      <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
+                        <div className="w-6 h-6 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                      </div>
+                    )}
+                  </div>
+                  <div className="flex flex-col gap-2">
+                    <div className="flex gap-2">
+                      <button onClick={() => fileRef.current?.click()} disabled={uploading}
+                        className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-semibold transition-colors disabled:opacity-50"
+                        style={{ background: 'var(--blue-50)', color: 'var(--blue-600)' }}>
+                        <FaUpload /> Upload Photo
+                      </button>
+                      <button onClick={openCamera} disabled={uploading}
+                        className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-semibold transition-colors disabled:opacity-50"
+                        style={{ background: '#dcfce7', color: '#16a34a' }}>
+                        <FaCamera /> Take Photo
+                      </button>
+                    </div>
+                    <span className="text-[0.65rem]" style={{ color: 'var(--gray-400)' }}>JPG, PNG • Max 5MB</span>
+                  </div>
+                  <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={e => handleAvatarUpload(e.target.files[0])} />
+                </div>
+              </div>
+
               {/* Avatar Picker */}
               <div>
-                <label className="block text-sm font-semibold mb-2" style={{ color: 'var(--gray-700)' }}>Choose Avatar</label>
+                <label className="block text-sm font-semibold mb-2" style={{ color: 'var(--gray-700)' }}>Or Choose Avatar</label>
                 <div className="flex flex-wrap gap-3">
                   {DUMMY_AVATARS.map((url, i) => (
                     <button key={i} onClick={() => setForm({ ...form, avatar: url })}
-                      className="w-14 h-14 rounded-xl overflow-hidden transition-all border-2"
+                      className="w-12 h-12 rounded-xl overflow-hidden transition-all border-2"
                       style={{
                         borderColor: form.avatar === url ? 'var(--blue-600)' : 'var(--gray-200)',
                         boxShadow: form.avatar === url ? 'var(--shadow-blue)' : 'none',
@@ -290,13 +368,13 @@ const Profile = () => {
                     </button>
                   ))}
                   <button onClick={() => setForm({ ...form, avatar: '' })}
-                    className="w-14 h-14 rounded-xl border-2 flex items-center justify-center text-xs font-semibold transition-all"
+                    className="w-12 h-12 rounded-xl border-2 flex items-center justify-center text-[0.6rem] font-semibold transition-all"
                     style={{
                       borderColor: !form.avatar ? 'var(--blue-600)' : 'var(--gray-200)',
                       color: !form.avatar ? 'var(--blue-600)' : 'var(--gray-400)',
                       background: !form.avatar ? 'var(--blue-50)' : 'var(--gray-50)',
                     }}>
-                    Initial
+                    None
                   </button>
                 </div>
               </div>
@@ -374,6 +452,21 @@ const Profile = () => {
               </button>
             </div>
           </motion.div>
+        </div>
+      )}
+
+      {/* ============ CAMERA MODAL ============ */}
+      {showCamera && (
+        <div className="fixed inset-0 z-[110] flex items-center justify-center p-4" style={{ background: 'rgba(0,0,0,0.7)' }}>
+          <div className="bg-white rounded-[20px] p-6 w-full max-w-md shadow-2xl">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="font-bold" style={{ color: 'var(--gray-900)' }}>📸 Take Photo</h3>
+              <button onClick={closeCamera} className="p-2 rounded-lg hover:bg-gray-100"><FaTimes style={{ color: 'var(--gray-400)' }} /></button>
+            </div>
+            <video ref={videoRef} autoPlay playsInline muted className="w-full rounded-xl mb-4 bg-black" style={{ maxHeight: 300 }} />
+            <canvas ref={canvasRef} className="hidden" />
+            <button onClick={capturePhoto} className="btn-primary w-full"><FaCamera /> Capture</button>
+          </div>
         </div>
       )}
     </div>

@@ -8,19 +8,45 @@ import toast from 'react-hot-toast';
 const EMPTY_CONTENT = { type: 'video', title: '', videoUrl: '', pdfUrl: '', contentText: '' };
 const EMPTY_SECTION = { sectionTitle: '', contents: [{ ...EMPTY_CONTENT }] };
 
+// Lightweight markdown-like formatter for live preview
+const formatNotes = (text) => {
+  if (!text) return '';
+  let html = text
+    // Escape HTML
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+    // Code blocks (```)
+    .replace(/```([\s\S]*?)```/g, '<pre style="background:#f1f5f9;padding:8px 12px;border-radius:8px;font-size:0.7rem;overflow-x:auto;margin:6px 0;font-family:monospace">$1</pre>')
+    // Headings
+    .replace(/^### (.+)$/gm, '<h4 style="font-size:0.85rem;font-weight:700;color:#1e293b;margin:10px 0 4px">$1</h4>')
+    .replace(/^## (.+)$/gm, '<h3 style="font-size:0.95rem;font-weight:700;color:#1e293b;margin:12px 0 4px">$1</h3>')
+    .replace(/^# (.+)$/gm, '<h2 style="font-size:1.05rem;font-weight:800;color:#0f172a;margin:14px 0 6px;padding-bottom:4px;border-bottom:1px solid #e2e8f0">$1</h2>')
+    // Bold
+    .replace(/\*\*(.+?)\*\*/g, '<strong style="font-weight:700;color:#1e293b">$1</strong>')
+    // Italic
+    .replace(/\*(.+?)\*/g, '<em>$1</em>')
+    // Inline code
+    .replace(/`([^`]+)`/g, '<code style="background:#e0e7ff;padding:1px 5px;border-radius:4px;font-size:0.7rem;font-family:monospace;color:#4338ca">$1</code>')
+    // Unordered list items
+    .replace(/^- (.+)$/gm, '<li style="margin-left:16px;list-style:disc;margin-bottom:2px">$1</li>')
+    // Ordered list items
+    .replace(/^\d+\. (.+)$/gm, '<li style="margin-left:16px;list-style:decimal;margin-bottom:2px">$1</li>')
+    // Line breaks
+    .replace(/\n/g, '<br/>');
+  return html;
+};
 const AdminCourses = () => {
   const [courses, setCourses] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [editId, setEditId] = useState(null);
-  const [form, setForm] = useState({ title: '', description: '', instructor: '', level: 'Beginner', duration: '8 weeks', image: '', sections: [] });
+  const [form, setForm] = useState({ title: '', description: '', instructor: '', level: 'Beginner', duration: '8 weeks', image: '', isFree: true, price: 0, qrCodeImage: '', sections: [] });
   const [uploading, setUploading] = useState(false);
 
   const load = () => { setLoading(true); courseAPI.getAll().then(({ data }) => { setCourses(data); setLoading(false); }).catch(() => setLoading(false)); };
   useEffect(load, []);
 
-  const startCreate = () => { setEditId(null); setForm({ title: '', description: '', instructor: '', level: 'Beginner', duration: '8 weeks', image: '', sections: [] }); setShowForm(true); };
-  const startEdit = (c) => { setEditId(c._id); setForm({ title: c.title, description: c.description, instructor: c.instructor || '', level: c.level, duration: c.duration || '', image: c.image || '', sections: c.sections || [] }); setShowForm(true); };
+  const startCreate = () => { setEditId(null); setForm({ title: '', description: '', instructor: '', level: 'Beginner', duration: '8 weeks', image: '', isFree: true, price: 0, qrCodeImage: '', sections: [] }); setShowForm(true); };
+  const startEdit = (c) => { setEditId(c._id); setForm({ title: c.title, description: c.description, instructor: c.instructor || '', level: c.level, duration: c.duration || '', image: c.image || '', isFree: c.isFree !== false, price: c.price || 0, qrCodeImage: c.qrCodeImage || '', sections: c.sections || [] }); setShowForm(true); };
 
   const handleImageUpload = async (e) => {
     const file = e.target.files?.[0];
@@ -103,6 +129,45 @@ const AdminCourses = () => {
             </div>
           </div>
 
+          {/* Step 1.5: Pricing */}
+          <div className="p-4 rounded-xl" style={{ background: 'var(--gray-50)' }}>
+            <div className="text-xs font-semibold uppercase tracking-wider mb-3" style={{ color: 'var(--orange-600)' }}>Pricing</div>
+            <div className="space-y-4">
+              <div className="flex items-center gap-4">
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input type="radio" checked={form.isFree} onChange={() => setForm({ ...form, isFree: true, price: 0, qrCodeImage: '' })} className="accent-blue-600" />
+                  <span className="text-sm font-semibold" style={{ color: 'var(--gray-700)' }}>Free</span>
+                </label>
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input type="radio" checked={!form.isFree} onChange={() => setForm({ ...form, isFree: false })} className="accent-blue-600" />
+                  <span className="text-sm font-semibold" style={{ color: 'var(--gray-700)' }}>Paid</span>
+                </label>
+              </div>
+              {!form.isFree && (
+                <div className="grid sm:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-xs font-semibold mb-1" style={{ color: 'var(--gray-700)' }}>Price (₹) *</label>
+                    <input type="number" value={form.price} onChange={e => setForm({ ...form, price: Number(e.target.value) })} className="input-light !text-sm" placeholder="e.g. 499" min="1" />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-semibold mb-1" style={{ color: 'var(--gray-700)' }}>Payment QR Code *</label>
+                    <div className="flex items-center gap-3">
+                      <input type="file" accept="image/*" onChange={async (e) => {
+                        const file = e.target.files?.[0]; if (!file) return;
+                        setUploading(true);
+                        try { const { data } = await uploadAPI.image(file); setForm(f => ({ ...f, qrCodeImage: data.url })); toast.success('QR uploaded!'); }
+                        catch { toast.error('Upload failed'); }
+                        setUploading(false);
+                      }} className="input-light !text-sm !py-1.5 flex-1" />
+                      {form.qrCodeImage && <img src={form.qrCodeImage} className="w-12 h-12 rounded-lg object-cover" style={{ border: '1px solid var(--gray-200)' }} />}
+                    </div>
+                    {uploading && <span className="text-xs mt-1 block" style={{ color: 'var(--blue-600)' }}>Uploading...</span>}
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+
           {/* Step 2: Sections */}
           <div className="p-4 rounded-xl" style={{ background: 'var(--gray-50)' }}>
             <div className="flex items-center justify-between mb-3">
@@ -148,12 +213,57 @@ const AdminCourses = () => {
                             className="input-light !text-xs !py-1.5" placeholder="YouTube or video URL..." />
                         )}
                         {content.type === 'pdf' && (
-                          <input value={content.pdfUrl} onChange={e => updateContent(si, ci, 'pdfUrl', e.target.value)}
-                            className="input-light !text-xs !py-1.5" placeholder="PDF URL (use upload or paste link)..." />
+                          <div className="space-y-1.5">
+                            <div className="flex items-center gap-2">
+                              <input value={content.pdfUrl} onChange={e => updateContent(si, ci, 'pdfUrl', e.target.value)}
+                                className="input-light !text-xs !py-1.5 flex-1" placeholder="Paste PDF/Drive link or upload below..." />
+                              {content.pdfUrl && <span className="text-green-500 text-xs">✓</span>}
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <label className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-[0.65rem] font-semibold cursor-pointer transition-colors"
+                                style={{ background: 'var(--blue-50)', color: 'var(--blue-600)' }}>
+                                📄 Upload PDF
+                                <input type="file" accept=".pdf" className="hidden" onChange={async (e) => {
+                                  const file = e.target.files?.[0]; if (!file) return;
+                                  setUploading(true);
+                                  try { const { data } = await uploadAPI.pdf(file); updateContent(si, ci, 'pdfUrl', data.url); toast.success('PDF uploaded!'); }
+                                  catch { toast.error('Upload failed'); }
+                                  setUploading(false);
+                                }} />
+                              </label>
+                              {uploading && <span className="text-[0.65rem]" style={{ color: 'var(--blue-600)' }}>Uploading...</span>}
+                              <span className="text-[0.6rem]" style={{ color: 'var(--gray-400)' }}>or paste a link above</span>
+                            </div>
+                          </div>
                         )}
                         {content.type === 'notes' && (
-                          <textarea value={content.contentText} onChange={e => updateContent(si, ci, 'contentText', e.target.value)}
-                            rows={3} className="input-light !text-xs !py-1.5 resize-y" placeholder="Write notes content..." />
+                          <div className="grid grid-cols-2 gap-3">
+                            {/* Editor */}
+                            <div>
+                              <div className="flex items-center justify-between mb-1">
+                                <span className="text-[0.6rem] font-semibold uppercase tracking-wider" style={{ color: 'var(--gray-400)' }}>✏️ Write</span>
+                                <span className="text-[0.55rem]" style={{ color: 'var(--gray-300)' }}>Supports **bold**, # headings, - lists, `code`</span>
+                              </div>
+                              <textarea value={content.contentText} onChange={e => updateContent(si, ci, 'contentText', e.target.value)}
+                                rows={8} className="input-light !text-xs !py-2 resize-y font-mono w-full" placeholder={`# Introduction\n\nWrite your notes here...\n\n**Bold text** for emphasis\n- List item 1\n- List item 2\n\n\`code snippet\``} style={{ minHeight: 180 }} />
+                            </div>
+                            {/* Live Preview */}
+                            <div>
+                              <div className="mb-1">
+                                <span className="text-[0.6rem] font-semibold uppercase tracking-wider" style={{ color: 'var(--blue-500)' }}>👁️ Preview</span>
+                              </div>
+                              <div className="bg-white rounded-xl p-3 overflow-y-auto text-xs leading-relaxed" style={{ border: '1px solid var(--gray-200)', minHeight: 180, maxHeight: 300, color: 'var(--gray-700)' }}>
+                                {content.contentText ? (
+                                  <div className="notes-preview" dangerouslySetInnerHTML={{ __html: formatNotes(content.contentText) }} />
+                                ) : (
+                                  <div className="text-center py-8" style={{ color: 'var(--gray-300)' }}>
+                                    <div className="text-2xl mb-1">📝</div>
+                                    <div className="text-[0.65rem]">Start typing to see preview</div>
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                          </div>
                         )}
                       </div>
                     ))}
@@ -197,7 +307,14 @@ const AdminCourses = () => {
                       </div>
                     </div>
                   </td>
-                  <td className="py-3 px-4"><span className="badge-blue text-xs">{c.level}</span></td>
+                  <td className="py-3 px-4">
+                    <span className="badge-blue text-xs">{c.level}</span>
+                    {c.isFree === false ? (
+                      <span className="ml-1 text-xs font-bold px-2 py-0.5 rounded-full" style={{ background: '#fef3c7', color: '#d97706' }}>₹{c.price}</span>
+                    ) : (
+                      <span className="ml-1 text-xs font-bold px-2 py-0.5 rounded-full" style={{ background: '#dcfce7', color: '#16a34a' }}>Free</span>
+                    )}
+                  </td>
                   <td className="py-3 px-4 text-sm" style={{ color: 'var(--gray-600)' }}>{c.sections?.length || 0}</td>
                   <td className="py-3 px-4 flex gap-2">
                     <button onClick={() => startEdit(c)} className="p-2 rounded-lg hover:bg-blue-50" style={{ color: 'var(--blue-600)' }}><HiPencil /></button>

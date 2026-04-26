@@ -1,7 +1,9 @@
 const express = require('express');
 const router = express.Router();
 const Course = require('../models/Course');
+const User = require('../models/User');
 const { protect, admin } = require('../middleware/auth');
+const { createNotification } = require('../utils/notificationHelper');
 
 // GET /api/courses - public
 router.get('/', async (req, res) => {
@@ -28,6 +30,18 @@ router.get('/:id', async (req, res) => {
 router.post('/', protect, admin, async (req, res) => {
   try {
     const course = await Course.create(req.body);
+
+    // Notify ALL users about the new course
+    const users = await User.find({}, '_id');
+    users.forEach(u => {
+      createNotification(
+        u._id, 'course',
+        `New Course: ${course.title} 🚀`,
+        `A new ${course.level} course "${course.title}" is now available!`,
+        `/dashboard/learning`
+      );
+    });
+
     res.status(201).json(course);
   } catch (error) {
     res.status(500).json({ message: error.message });

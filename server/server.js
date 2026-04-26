@@ -25,6 +25,13 @@ app.use('/api/enrollments', require('./routes/enrollments'));
 app.use('/api/admin', require('./routes/admin'));
 app.use('/api/judge', require('./routes/judge'));
 app.use('/api/upload', require('./routes/upload'));
+app.use('/api/notifications', require('./routes/notifications'));
+app.use('/api/discussions', require('./routes/discussions'));
+app.use('/api/ai', require('./routes/ai'));
+app.use('/api/certificates', require('./routes/certificates'));
+app.use('/api/jobs', require('./routes/jobs'));
+app.use('/api/resources', require('./routes/resources'));
+app.use('/api/coupons', require('./routes/coupons'));
 
 // Health check
 app.get('/api/health', (req, res) => {

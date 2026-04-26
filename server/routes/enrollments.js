@@ -3,6 +3,8 @@ const router = express.Router();
 const Enrollment = require('../models/Enrollment');
 const Course = require('../models/Course');
 const { protect } = require('../middleware/auth');
+const { createNotification } = require('../utils/notificationHelper');
+const Coupon = require('../models/Coupon');
 
 // GET /api/enrollments - user's enrollments
 router.get('/', protect, async (req, res) => {
@@ -19,12 +21,25 @@ router.get('/', protect, async (req, res) => {
 // POST /api/enrollments - enroll in course
 router.post('/', protect, async (req, res) => {
   try {
-    const { courseId } = req.body;
+    const { courseId, couponCode } = req.body;
     const existing = await Enrollment.findOne({ userId: req.user._id, courseId });
     if (existing) return res.status(400).json({ message: 'Already enrolled in this course' });
 
     const course = await Course.findById(courseId);
     if (!course) return res.status(404).json({ message: 'Course not found' });
+
+    // If paid course, validate coupon
+    if (!course.isFree && course.price > 0) {
+      if (!couponCode) return res.status(400).json({ message: 'Coupon code required for paid courses' });
+      const coupon = await Coupon.findOne({ code: couponCode.toUpperCase().trim(), courseId });
+      if (!coupon) return res.status(400).json({ message: 'Invalid coupon code for this course' });
+      if (coupon.isUsed) return res.status(400).json({ message: 'This coupon has already been used' });
+      // Mark coupon as used
+      coupon.isUsed = true;
+      coupon.usedBy = req.user._id;
+      coupon.usedAt = new Date();
+      await coupon.save();
+    }
 
     const enrollment = await Enrollment.create({ userId: req.user._id, courseId });
     await Course.findByIdAndUpdate(courseId, { $inc: { enrolled: 1 } });
@@ -56,6 +71,10 @@ router.put('/:id/complete-content', protect, async (req, res) => {
     enrollment.progress = totalContents > 0 ? Math.round((enrollment.completedContents.length / totalContents) * 100) : 0;
 
     await enrollment.save();
+    // Notify on course completion
+    if (enrollment.progress === 100) {
+      createNotification(req.user._id, 'course', 'Course Completed! 🎓', `You completed "${course.title}". Download your certificate!`, `/dashboard/my-courses`);
+    }
     const populated = await enrollment.populate('courseId');
     res.json(populated);
   } catch (error) {

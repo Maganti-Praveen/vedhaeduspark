@@ -5,6 +5,7 @@ const { createSubmission, LANGUAGE_IDS } = require('../utils/judge0');
 const Problem = require('../models/Problem');
 const Submission = require('../models/Submission');
 const User = require('../models/User');
+const { createNotification } = require('../utils/notificationHelper');
 
 // POST /api/judge/run - run code against sample test cases
 router.post('/run', protect, async (req, res) => {
@@ -110,6 +111,7 @@ router.post('/submit', protect, async (req, res) => {
         $addToSet: { solvedProblems: problemId },
       });
       await Problem.findByIdAndUpdate(problemId, { $inc: { solvedBy: 1 } });
+      createNotification(req.user._id, 'achievement', `Problem Solved! ✅`, `You solved "${problem.title}". Keep going!`, `/dashboard/practice`);
     }
 
     res.json({

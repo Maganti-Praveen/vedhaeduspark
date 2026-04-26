@@ -25,6 +25,11 @@ const Resources = lazy(() => import('./pages/dashboard/Resources'));
 const Profile = lazy(() => import('./pages/dashboard/Profile'));
 const MyCourses = lazy(() => import('./pages/dashboard/MyCourses'));
 const CourseView = lazy(() => import('./pages/dashboard/CourseView'));
+const Community = lazy(() => import('./pages/dashboard/Community'));
+const AIAssistant = lazy(() => import('./pages/dashboard/AIAssistant'));
+const Notifications = lazy(() => import('./pages/dashboard/Notifications'));
+const MyCertificates = lazy(() => import('./pages/dashboard/MyCertificates'));
+const Jobs = lazy(() => import('./pages/dashboard/Jobs'));
 const ProblemSolve = lazy(() => import('./pages/coding/ProblemSolve'));
 
 // Admin — proper lazy imports (cached after first load = instant switching)
@@ -32,8 +37,12 @@ const AdminLayout = lazy(() => import('./pages/admin/Admin').then(m => ({ defaul
 const AdminDashboard = lazy(() => import('./pages/admin/Admin').then(m => ({ default: m.AdminDashboard })));
 const AdminCourses = lazy(() => import('./pages/admin/AdminCourses'));
 const AdminProblems = lazy(() => import('./pages/admin/AdminProblems'));
+const AdminAnalytics = lazy(() => import('./pages/admin/AdminAnalytics'));
 const AdminSubjects = lazy(() => import('./pages/admin/Admin').then(m => ({ default: m.AdminSubjects })));
 const AdminUsers = lazy(() => import('./pages/admin/Admin').then(m => ({ default: m.AdminUsers })));
+const AdminJobs = lazy(() => import('./pages/admin/AdminJobs'));
+const AdminResources = lazy(() => import('./pages/admin/AdminResources'));
+const AdminCoupons = lazy(() => import('./pages/admin/AdminCoupons'));
 
 const PageLoader = () => (
   <div className="min-h-screen flex items-center justify-center" style={{ background: 'var(--gray-50)' }}>
@@ -95,6 +104,11 @@ function App() {
                 <Route path="my-courses" element={<MyCourses />} />
                 <Route path="course/:id" element={<CourseView />} />
                 <Route path="practice" element={<Practice />} />
+                <Route path="community" element={<Community />} />
+                <Route path="ai-assistant" element={<AIAssistant />} />
+                <Route path="notifications" element={<Notifications />} />
+                <Route path="certificates" element={<MyCertificates />} />
+                <Route path="jobs" element={<Jobs />} />
                 <Route path="progress" element={<Progress />} />
                 <Route path="resources" element={<Resources />} />
                 <Route path="profile" element={<Profile />} />
@@ -106,9 +120,13 @@ function App() {
               {/* Admin Routes */}
               <Route path="/admin" element={<AdminRoute><AdminLayout /></AdminRoute>}>
                 <Route index element={<AdminDashboard />} />
+                <Route path="analytics" element={<AdminAnalytics />} />
                 <Route path="courses" element={<AdminCourses />} />
+                <Route path="coupons" element={<AdminCoupons />} />
                 <Route path="subjects" element={<AdminSubjects />} />
                 <Route path="problems" element={<AdminProblems />} />
+                <Route path="jobs" element={<AdminJobs />} />
+                <Route path="resources" element={<AdminResources />} />
                 <Route path="users" element={<AdminUsers />} />
               </Route>
             </Routes>

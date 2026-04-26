@@ -1,8 +1,9 @@
 import { useState } from 'react';
 import { NavLink, Outlet, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { HiHome, HiBookOpen, HiCode, HiFolder, HiUser, HiMenu, HiX, HiLogout, HiChartBar, HiAcademicCap } from 'react-icons/hi';
+import { HiHome, HiBookOpen, HiCode, HiFolder, HiUser, HiMenu, HiX, HiLogout, HiChartBar, HiAcademicCap, HiChatAlt2, HiLightningBolt, HiDocumentText, HiBriefcase } from 'react-icons/hi';
 import { useAuth } from '../../contexts/AuthContext';
+import NotificationBell from '../common/NotificationBell';
 
 const DashboardLayout = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -16,6 +17,10 @@ const DashboardLayout = () => {
     { path: '/dashboard/learning', icon: <HiBookOpen />, label: 'Learning' },
     { path: '/dashboard/my-courses', icon: <HiAcademicCap />, label: 'My Courses' },
     { path: '/dashboard/practice', icon: <HiCode />, label: 'Practice' },
+    { path: '/dashboard/community', icon: <HiChatAlt2 />, label: 'Community' },
+    { path: '/dashboard/ai-assistant', icon: <HiLightningBolt />, label: 'AI Assistant' },
+    { path: '/dashboard/certificates', icon: <HiDocumentText />, label: 'Certificates' },
+    { path: '/dashboard/jobs', icon: <HiBriefcase />, label: 'Jobs' },
     { path: '/dashboard/progress', icon: <HiChartBar />, label: 'Progress' },
     { path: '/dashboard/resources', icon: <HiFolder />, label: 'Resources' },
     { path: '/dashboard/profile', icon: <HiUser />, label: 'Profile' },
@@ -97,7 +102,13 @@ const DashboardLayout = () => {
         <div className="lg:hidden sticky top-0 z-20 flex items-center gap-3 px-4 h-14 bg-white/90 backdrop-blur-xl"
           style={{ borderBottom: '1px solid var(--gray-200)' }}>
           <button onClick={() => setSidebarOpen(true)} style={{ color: 'var(--gray-500)' }}><HiMenu size={24} /></button>
-          <span className="font-bold" style={{ color: 'var(--blue-700)' }}>VES</span>
+          <span className="font-bold flex-1" style={{ color: 'var(--blue-700)' }}>VES</span>
+          <NotificationBell />
+        </div>
+        {/* Desktop top bar */}
+        <div className="hidden lg:flex sticky top-0 z-20 items-center justify-end px-8 h-14 bg-white/90 backdrop-blur-xl"
+          style={{ borderBottom: '1px solid var(--gray-200)' }}>
+          <NotificationBell />
         </div>
         <main className="p-4 sm:p-6 lg:p-8">
           <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }}>

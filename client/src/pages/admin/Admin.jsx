@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { NavLink, Outlet, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { HiHome, HiBookOpen, HiCode, HiUsers, HiMenu, HiX, HiLogout, HiPlus, HiTrash, HiPencil, HiAcademicCap, HiMail } from 'react-icons/hi';
+import { HiHome, HiBookOpen, HiCode, HiUsers, HiMenu, HiX, HiLogout, HiPlus, HiTrash, HiPencil, HiAcademicCap, HiMail, HiChartBar, HiBriefcase, HiFolder, HiTicket } from 'react-icons/hi';
 import { FaPaperPlane } from 'react-icons/fa';
 import { useAuth } from '../../contexts/AuthContext';
 import { courseAPI, problemAPI, subjectAPI, adminAPI } from '../../services/api';
@@ -17,9 +17,13 @@ export const AdminLayout = () => {
 
   const links = [
     { path: '/admin', icon: <HiHome />, label: 'Dashboard', end: true },
+    { path: '/admin/analytics', icon: <HiChartBar />, label: 'Analytics' },
     { path: '/admin/courses', icon: <HiBookOpen />, label: 'Courses' },
+    { path: '/admin/coupons', icon: <HiTicket />, label: 'Coupons' },
     { path: '/admin/subjects', icon: <HiAcademicCap />, label: 'Subjects' },
     { path: '/admin/problems', icon: <HiCode />, label: 'Problems' },
+    { path: '/admin/jobs', icon: <HiBriefcase />, label: 'Jobs' },
+    { path: '/admin/resources', icon: <HiFolder />, label: 'Resources' },
     { path: '/admin/users', icon: <HiUsers />, label: 'Users' },
   ];
 

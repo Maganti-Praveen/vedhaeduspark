@@ -83,7 +83,7 @@ export const submissionAPI = {
 // Enrollment API
 export const enrollmentAPI = {
   getAll: () => api.get('/enrollments'),
-  enroll: (courseId) => api.post('/enrollments', { courseId }),
+  enroll: (courseId, couponCode) => api.post('/enrollments', { courseId, couponCode }),
   updateProgress: (id, progress) => api.put(`/enrollments/${id}/progress`, { progress }),
   completeContent: (id, contentId) => api.put(`/enrollments/${id}/complete-content`, { contentId }),
   uncompleteContent: (id, contentId) => api.put(`/enrollments/${id}/uncomplete-content`, { contentId }),
@@ -92,16 +92,77 @@ export const enrollmentAPI = {
 // Admin API
 export const adminAPI = {
   getStats: () => api.get('/admin/stats'),
+  getAnalytics: () => api.get('/admin/analytics'),
   getUsers: () => api.get('/admin/users'),
   updateRole: (id, role) => api.put(`/admin/users/${id}/role`, { role }),
   deleteUser: (id) => api.delete(`/admin/users/${id}`),
   sendNotification: (data) => api.post('/admin/send-notification', data),
 };
 
+// Coupon API
+export const couponAPI = {
+  getCourses: () => api.get('/coupons/courses'),
+  getByCourse: (courseId) => api.get(`/coupons/${courseId}`),
+  generate: (data) => api.post('/coupons/generate', data),
+  validate: (code, courseId) => api.post('/coupons/validate', { code, courseId }),
+  delete: (id) => api.delete(`/coupons/${id}`),
+};
+
 // Upload API
 export const uploadAPI = {
   image: (file) => { const fd = new FormData(); fd.append('file', file); return api.post('/upload/image', fd, { headers: { 'Content-Type': 'multipart/form-data' } }); },
+  avatar: (file) => { const fd = new FormData(); fd.append('file', file); return api.post('/upload/avatar', fd, { headers: { 'Content-Type': 'multipart/form-data' } }); },
   pdf: (file) => { const fd = new FormData(); fd.append('file', file); return api.post('/upload/pdf', fd, { headers: { 'Content-Type': 'multipart/form-data' } }); },
+};
+
+// Notification API
+export const notificationAPI = {
+  getAll: () => api.get('/notifications'),
+  getUnreadCount: () => api.get('/notifications/unread-count'),
+  markRead: (id) => api.put(`/notifications/${id}/read`),
+  markAllRead: () => api.put('/notifications/read-all'),
+  delete: (id) => api.delete(`/notifications/${id}`),
+};
+
+// Discussion API
+export const discussionAPI = {
+  getAll: (params) => api.get('/discussions', { params }),
+  getById: (id) => api.get(`/discussions/${id}`),
+  create: (data) => api.post('/discussions', data),
+  reply: (id, data) => api.post(`/discussions/${id}/reply`, data),
+  like: (id) => api.put(`/discussions/${id}/like`),
+  likeReply: (id, replyId) => api.put(`/discussions/${id}/replies/${replyId}/like`),
+  delete: (id) => api.delete(`/discussions/${id}`),
+};
+
+// AI API
+export const aiAPI = {
+  ask: (data) => api.post('/ai/ask', data),
+  codeHint: (data) => api.post('/ai/code-hint', data),
+  explain: (data) => api.post('/ai/explain', data),
+};
+
+// Certificate API
+export const certificateAPI = {
+  getAll: () => api.get('/certificates'),
+  generate: (enrollmentId) => api.get(`/certificates/${enrollmentId}/generate`, { responseType: 'blob' }),
+};
+
+// Jobs API
+export const jobAPI = {
+  getAll: (params) => api.get('/jobs', { params }),
+  getCategories: () => api.get('/jobs/categories'),
+  create: (data) => api.post('/jobs', data),
+  update: (id, data) => api.put(`/jobs/${id}`, data),
+  delete: (id) => api.delete(`/jobs/${id}`),
+};
+
+// Resources API
+export const resourceAPI = {
+  getAll: (params) => api.get('/resources', { params }),
+  create: (data) => api.post('/resources', data),
+  update: (id, data) => api.put(`/resources/${id}`, data),
+  delete: (id) => api.delete(`/resources/${id}`),
 };
 
 export default api;
