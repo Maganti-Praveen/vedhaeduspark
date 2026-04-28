@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { HiX } from 'react-icons/hi';
 import { FaClock, FaArrowRight } from 'react-icons/fa';
-import { subjectAPI, courseAPI, enrollmentAPI } from '../../services/api';
+import { courseAPI, enrollmentAPI } from '../../services/api';
 import { SkeletonCard } from '../../components/common/Skeleton';
 import toast from 'react-hot-toast';
 
@@ -14,13 +14,9 @@ const fadeUp = {
 
 const Learning = () => {
   const navigate = useNavigate();
-  const [subjects, setSubjects] = useState([]);
   const [courses, setCourses] = useState([]);
   const [enrolledIds, setEnrolledIds] = useState([]);
-  const [selectedSubject, setSelectedSubject] = useState(null);
-  const [activeTab, setActiveTab] = useState('notes');
   const [loading, setLoading] = useState(true);
-  const [tab, setTab] = useState('courses'); // 'courses' | 'subjects'
   // Paid course popup
   const [enrollPopup, setEnrollPopup] = useState(null);
   const [couponCode, setCouponCode] = useState('');
@@ -28,11 +24,9 @@ const Learning = () => {
 
   useEffect(() => {
     Promise.all([
-      subjectAPI.getAll().catch(() => ({ data: [] })),
       courseAPI.getAll().catch(() => ({ data: [] })),
       enrollmentAPI.getAll().catch(() => ({ data: [] })),
-    ]).then(([subRes, courseRes, enrollRes]) => {
-      setSubjects(subRes.data);
+    ]).then(([courseRes, enrollRes]) => {
       setCourses(courseRes.data);
       setEnrolledIds(enrollRes.data.map(e => e.courseId?._id || e.courseId));
       setLoading(false);
@@ -75,106 +69,31 @@ const Learning = () => {
     </div>
   );
 
-  // Subject detail view
-  if (selectedSubject) {
-    return (
-      <div className="space-y-6">
-        <div className="flex items-center gap-4">
-          <button onClick={() => setSelectedSubject(null)} className="px-3 py-2 rounded-lg transition-colors hover:bg-gray-100" style={{ color: 'var(--gray-500)' }}>← Back</button>
-          <div>
-            <h1 className="text-2xl font-bold flex items-center gap-2" style={{ color: 'var(--gray-900)' }}>
-              <span>{selectedSubject.icon}</span>{selectedSubject.name}
-            </h1>
-            <p className="text-sm" style={{ color: 'var(--gray-500)' }}>{selectedSubject.description}</p>
-          </div>
-        </div>
-
-        <div className="flex gap-2" style={{ borderBottom: '1px solid var(--gray-200)' }}>
-          {['notes', 'videos', 'roadmap'].map((t) => (
-            <button key={t} onClick={() => setActiveTab(t)}
-              className="px-5 py-2.5 rounded-t-lg text-sm font-medium capitalize transition-all"
-              style={{
-                color: activeTab === t ? 'var(--blue-700)' : 'var(--gray-500)',
-                background: activeTab === t ? 'var(--blue-50)' : 'transparent',
-                borderBottom: activeTab === t ? '2px solid var(--blue-600)' : '2px solid transparent',
-              }}>{t}</button>
-          ))}
-        </div>
-
-        <motion.div key={activeTab} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
-          {activeTab === 'notes' && (
-            <div className="space-y-4">
-              {selectedSubject.notes?.length > 0 ? selectedSubject.notes.map((note, i) => (
-                <div key={i} className="bg-white rounded-[16px] p-6 shadow-sm" style={{ border: '1px solid var(--gray-200)' }}>
-                  <h3 className="text-lg font-bold mb-4" style={{ color: 'var(--blue-700)' }}>{note.title}</h3>
-                  <div className="prose prose-sm max-w-none whitespace-pre-wrap leading-relaxed" style={{ color: 'var(--gray-700)' }}>
-                    {note.content}
-                  </div>
-                </div>
-              )) : <div className="text-center py-12" style={{ color: 'var(--gray-400)' }}>No notes available yet.</div>}
-            </div>
-          )}
-          {activeTab === 'videos' && (
-            <div className="grid md:grid-cols-2 gap-4">
-              {selectedSubject.videos?.length > 0 ? selectedSubject.videos.map((video, i) => (
-                <div key={i} className="bg-white rounded-[16px] overflow-hidden shadow-sm" style={{ border: '1px solid var(--gray-200)' }}>
-                  <div className="aspect-video">
-                    <iframe src={video.youtubeUrl} title={video.title} className="w-full h-full" allowFullScreen />
-                  </div>
-                  <div className="p-4">
-                    <h3 className="font-semibold text-sm" style={{ color: 'var(--gray-800)' }}>{video.title}</h3>
-                  </div>
-                </div>
-              )) : <div className="col-span-2 text-center py-12" style={{ color: 'var(--gray-400)' }}>No videos available yet.</div>}
-            </div>
-          )}
-          {activeTab === 'roadmap' && (
-            <div className="relative">
-              <div className="absolute left-6 top-0 bottom-0 w-0.5" style={{ background: 'var(--gray-200)' }} />
-              <div className="space-y-6">
-                {selectedSubject.roadmap?.length > 0 ? selectedSubject.roadmap.map((step, i) => (
-                  <motion.div key={i} variants={fadeUp} custom={i} initial="hidden" animate="visible" className="relative pl-14">
-                    <div className={`absolute left-4 top-4 w-5 h-5 rounded-full border-2 flex items-center justify-center text-xs z-10 ${
-                      step.completed ? 'bg-green-500 border-green-500 text-white' : 'bg-white border-gray-300 text-gray-400'
-                    }`}>{step.completed ? '✓' : step.step}</div>
-                    <div className="bg-white rounded-[16px] p-5 shadow-sm" style={{ border: '1px solid var(--gray-200)' }}>
-                      <h3 className="font-bold mb-1" style={{ color: 'var(--gray-900)' }}>{step.title}</h3>
-                      <p className="text-sm" style={{ color: 'var(--gray-500)' }}>{step.description}</p>
-                    </div>
-                  </motion.div>
-                )) : <div className="text-center py-12 pl-14" style={{ color: 'var(--gray-400)' }}>Roadmap coming soon.</div>}
-              </div>
-            </div>
-          )}
-        </motion.div>
-      </div>
-    );
-  }
-
   return (
     <div className="space-y-6">
       <motion.div initial="hidden" animate="visible" variants={fadeUp}>
         <h1 className="text-2xl font-bold mb-1" style={{ color: 'var(--gray-900)' }}>Learning Hub</h1>
-        <p style={{ color: 'var(--gray-500)' }}>Explore courses and subjects to start learning</p>
+        <p style={{ color: 'var(--gray-500)' }}>Explore courses and e-books to start learning</p>
       </motion.div>
 
-      {/* Tab Switcher */}
-      <div className="flex gap-2">
-        <button onClick={() => setTab('courses')}
-          className="px-5 py-2.5 rounded-xl text-sm font-semibold transition-all"
-          style={{ background: tab === 'courses' ? 'var(--blue-600)' : 'var(--gray-100)', color: tab === 'courses' ? '#fff' : 'var(--gray-500)' }}>
-          📚 Courses ({courses.length})
-        </button>
-        <button onClick={() => setTab('subjects')}
-          className="px-5 py-2.5 rounded-xl text-sm font-semibold transition-all"
-          style={{ background: tab === 'subjects' ? 'var(--blue-600)' : 'var(--gray-100)', color: tab === 'subjects' ? '#fff' : 'var(--gray-500)' }}>
-          📖 Subjects ({subjects.length})
-        </button>
-      </div>
+      {/* Quick Link to E-Books */}
+      <motion.div initial="hidden" animate="visible" variants={fadeUp} custom={1}
+        onClick={() => navigate('/dashboard/ebooks')}
+        className="bg-white p-4 rounded-[16px] shadow-sm cursor-pointer flex items-center gap-4 transition-all hover:-translate-y-1 hover:shadow-md group"
+        style={{ border: '1px solid var(--gray-200)' }}>
+        <div className="w-12 h-12 rounded-xl flex items-center justify-center text-xl" style={{ background: '#ede9fe' }}>📚</div>
+        <div className="flex-1">
+          <h3 className="font-bold text-sm group-hover:text-blue-600 transition-colors" style={{ color: 'var(--gray-900)' }}>E-Book Library</h3>
+          <p className="text-xs" style={{ color: 'var(--gray-400)' }}>Browse our collection of e-books and learning resources</p>
+        </div>
+        <FaArrowRight style={{ color: 'var(--gray-400)' }} />
+      </motion.div>
 
-      {/* ========== COURSES TAB ========== */}
-      {tab === 'courses' && (
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-5">
+      {/* Courses Title */}
+      <h2 className="text-lg font-bold" style={{ color: 'var(--gray-800)' }}>📚 All Courses ({courses.length})</h2>
+
+      {/* ========== COURSES GRID ========== */}
+      <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-5">
           {courses.length === 0 ? (
             <div className="col-span-3 text-center py-16" style={{ color: 'var(--gray-400)' }}>No courses available yet.</div>
           ) : courses.map((course, i) => {
@@ -222,30 +141,7 @@ const Learning = () => {
               </motion.div>
             );
           })}
-        </div>
-      )}
-
-      {/* ========== SUBJECTS TAB ========== */}
-      {tab === 'subjects' && (
-        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4">
-          {subjects.length === 0 ? (
-            <div className="col-span-4 text-center py-16" style={{ color: 'var(--gray-400)' }}>No subjects available yet.</div>
-          ) : subjects.map((subject, i) => (
-            <motion.div key={subject._id} initial="hidden" animate="visible" variants={fadeUp} custom={i + 1}
-              onClick={() => { setSelectedSubject(subject); setActiveTab('notes'); }}
-              className="bg-white p-6 rounded-[16px] cursor-pointer text-center shadow-sm transition-all hover:-translate-y-1.5 hover:shadow-lg group"
-              style={{ border: '1px solid var(--gray-200)' }}>
-              <div className="text-4xl mb-3">{subject.icon}</div>
-              <h3 className="font-bold text-lg mb-1 transition-colors group-hover:text-blue-600" style={{ color: 'var(--gray-900)' }}>{subject.name}</h3>
-              <p className="text-xs mb-3 line-clamp-2" style={{ color: 'var(--gray-500)' }}>{subject.description}</p>
-              <div className="flex items-center justify-center gap-4 text-xs" style={{ color: 'var(--gray-400)' }}>
-                <span>{subject.notes?.length || 0} notes</span>
-                <span>{subject.videos?.length || 0} videos</span>
-              </div>
-            </motion.div>
-          ))}
-        </div>
-      )}
+      </div>
 
       {/* ========== PAID COURSE POPUP ========== */}
       {enrollPopup && (
@@ -290,6 +186,19 @@ const Learning = () => {
                 className="btn-primary w-full !py-3 disabled:opacity-50">
                 {enrolling ? 'Validating...' : '✨ Enroll with Coupon'}
               </button>
+
+              {/* Payment Instructions */}
+              <div className="p-3.5 rounded-xl" style={{ background: '#fef3c7', border: '1px solid #fcd34d' }}>
+                <p className="text-xs font-bold mb-1" style={{ color: '#92400e' }}>💳 How to Pay</p>
+                <p className="text-[0.7rem] leading-relaxed" style={{ color: '#78350f' }}>
+                  Pay <strong>₹{enrollPopup.price}</strong> and send payment screenshot, your email ID & course name to:
+                </p>
+                <div className="mt-1.5 space-y-0.5">
+                  <p className="text-[0.7rem] font-bold" style={{ color: '#92400e' }}>📧 vedhaedusparkcenter@gmail.com</p>
+                  <p className="text-[0.7rem] font-bold" style={{ color: '#92400e' }}>📱 9391640022</p>
+                </div>
+                <p className="text-[0.6rem] mt-1.5" style={{ color: '#a16207' }}>You'll receive a coupon code after verification.</p>
+              </div>
             </div>
           </motion.div>
         </div>

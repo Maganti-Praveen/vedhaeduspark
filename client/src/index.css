@@ -337,3 +337,7 @@
 code, pre, .font-mono {
   font-family: 'JetBrains Mono', monospace;
 }
+
+/* Scrollbar Hide for mega menu */
+.scrollbar-hide::-webkit-scrollbar { display: none; }
+.scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }

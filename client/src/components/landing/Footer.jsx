@@ -38,12 +38,7 @@ const Footer = () => {
           {/* Brand */}
           <div>
             <Link to="/" className="flex items-center gap-2.5 mb-4">
-              <div
-                className="w-10 h-10 rounded-xl flex items-center justify-center font-bold text-white text-lg"
-                style={{ background: 'var(--gradient-orange)' }}
-              >
-                V
-              </div>
+              <img src="/logo.png" alt="VedhaEduSpark" className="h-10 w-10 rounded-xl object-contain" />
               <span className="text-xl font-bold text-white">Vedha EduSpark</span>
             </Link>
             <p className="text-sm leading-relaxed mb-5" style={{ color: 'rgba(255,255,255,0.6)' }}>

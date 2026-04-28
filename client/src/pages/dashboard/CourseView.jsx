@@ -2,8 +2,9 @@ import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { HiChevronDown, HiChevronRight, HiArrowLeft, HiCheckCircle } from 'react-icons/hi';
-import { FaVideo, FaFilePdf, FaStickyNote, FaCheck } from 'react-icons/fa';
-import { courseAPI, enrollmentAPI } from '../../services/api';
+import { FaVideo, FaFilePdf, FaStickyNote, FaCheck, FaStar } from 'react-icons/fa';
+import { courseAPI, enrollmentAPI, reviewAPI } from '../../services/api';
+import { useAuth } from '../../contexts/AuthContext';
 import toast from 'react-hot-toast';
 
 const typeIcon = { video: <FaVideo />, pdf: <FaFilePdf />, notes: <FaStickyNote /> };
@@ -12,12 +13,19 @@ const typeColor = { video: { bg: '#ede9fe', color: '#7c3aed' }, pdf: { bg: '#fee
 const CourseView = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [course, setCourse] = useState(null);
   const [enrollment, setEnrollment] = useState(null);
   const [loading, setLoading] = useState(true);
   const [activeSection, setActiveSection] = useState(0);
   const [activeContent, setActiveContent] = useState(0);
   const [expandedSections, setExpandedSections] = useState(new Set([0]));
+  // Reviews
+  const [reviews, setReviews] = useState([]);
+  const [reviewAvg, setReviewAvg] = useState(0);
+  const [myRating, setMyRating] = useState(0);
+  const [myComment, setMyComment] = useState('');
+  const [showReviews, setShowReviews] = useState(false);
 
   useEffect(() => {
     Promise.all([
@@ -29,8 +37,26 @@ const CourseView = () => {
       if (!enr) { toast.error('Not enrolled in this course'); navigate('/dashboard/my-courses'); return; }
       setEnrollment(enr);
       setLoading(false);
+      loadReviews();
     }).catch(() => { toast.error('Course not found'); navigate('/dashboard/my-courses'); });
   }, [id]);
+
+  const loadReviews = () => {
+    reviewAPI.getByCourse(id).then(({ data }) => {
+      setReviews(data.reviews); setReviewAvg(data.average);
+      const mine = data.reviews.find(r => r.userId?._id === user?._id);
+      if (mine) { setMyRating(mine.rating); setMyComment(mine.comment || ''); }
+    }).catch(() => {});
+  };
+
+  const submitReview = async () => {
+    if (!myRating) return toast.error('Select a rating');
+    try {
+      await reviewAPI.create({ courseId: id, rating: myRating, comment: myComment });
+      toast.success('Review submitted!');
+      loadReviews();
+    } catch { toast.error('Failed to submit review'); }
+  };
 
   const toggleSection = (idx) => {
     setExpandedSections(prev => {
@@ -283,6 +309,59 @@ const CourseView = () => {
             </div>
           )}
         </div>
+      </div>
+
+      {/* ========= REVIEWS SECTION ========= */}
+      <div className="mt-6 bg-white rounded-[16px] p-5 shadow-sm" style={{ border: '1px solid var(--gray-200)' }}>
+        <div className="flex items-center justify-between mb-4 cursor-pointer" onClick={() => setShowReviews(!showReviews)}>
+          <div className="flex items-center gap-3">
+            <h3 className="font-bold" style={{ color: 'var(--gray-900)' }}>⭐ Ratings & Reviews</h3>
+            <span className="text-sm font-bold" style={{ color: '#f59e0b' }}>{reviewAvg}/5</span>
+            <span className="text-xs" style={{ color: 'var(--gray-400)' }}>({reviews.length} reviews)</span>
+          </div>
+          <span className="text-xs" style={{ color: 'var(--blue-600)' }}>{showReviews ? 'Hide' : 'Show'}</span>
+        </div>
+
+        {showReviews && (
+          <div className="space-y-4">
+            {/* Write Review */}
+            <div className="p-4 rounded-xl" style={{ background: 'var(--gray-50)' }}>
+              <p className="text-xs font-semibold mb-2" style={{ color: 'var(--gray-700)' }}>Your Rating</p>
+              <div className="flex items-center gap-1 mb-3">
+                {[1, 2, 3, 4, 5].map(s => (
+                  <button key={s} onClick={() => setMyRating(s)} className="text-xl transition-transform hover:scale-110">
+                    <FaStar style={{ color: s <= myRating ? '#f59e0b' : '#d1d5db' }} />
+                  </button>
+                ))}
+                <span className="ml-2 text-xs font-bold" style={{ color: 'var(--gray-500)' }}>{myRating}/5</span>
+              </div>
+              <div className="flex gap-2">
+                <input value={myComment} onChange={e => setMyComment(e.target.value)} className="input-light !text-xs !py-2 flex-1" placeholder="Write a review (optional)..." />
+                <button onClick={submitReview} className="btn-primary !py-2 !px-4 !text-xs">Submit</button>
+              </div>
+            </div>
+
+            {/* Review List */}
+            {reviews.length > 0 && (
+              <div className="space-y-3 max-h-64 overflow-y-auto">
+                {reviews.map(r => (
+                  <div key={r._id} className="flex gap-3 pb-3" style={{ borderBottom: '1px solid var(--gray-100)' }}>
+                    <div className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold text-white overflow-hidden flex-shrink-0" style={{ background: 'var(--gradient-blue)' }}>
+                      {r.userId?.avatar ? <img src={r.userId.avatar} className="w-full h-full object-cover" /> : r.userId?.name?.[0]}
+                    </div>
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2 mb-0.5">
+                        <span className="text-xs font-semibold" style={{ color: 'var(--gray-800)' }}>{r.userId?.name}</span>
+                        <div className="flex">{Array.from({ length: 5 }).map((_, i) => <FaStar key={i} className="text-[0.55rem]" style={{ color: i < r.rating ? '#f59e0b' : '#e5e7eb' }} />)}</div>
+                      </div>
+                      {r.comment && <p className="text-xs" style={{ color: 'var(--gray-500)' }}>{r.comment}</p>}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
       </div>
     </div>
   );

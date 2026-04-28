@@ -4,6 +4,8 @@ const Coupon = require('../models/Coupon');
 const Course = require('../models/Course');
 const { protect, admin } = require('../middleware/auth');
 const crypto = require('crypto');
+const User = require('../models/User');
+const { sendCouponEmail } = require('../utils/emailService');
 
 // Generate random coupon code
 const generateCode = (length = 8) => {
@@ -99,6 +101,21 @@ router.delete('/:id', protect, admin, async (req, res) => {
     if (coupon.isUsed) return res.status(400).json({ message: 'Cannot delete a used coupon' });
     await coupon.deleteOne();
     res.json({ message: 'Deleted' });
+  } catch (error) { res.status(500).json({ message: error.message }); }
+});
+
+// POST /api/coupons/send-email — send coupon to user email (admin)
+router.post('/send-email', protect, admin, async (req, res) => {
+  try {
+    const { couponId, email } = req.body;
+    const coupon = await Coupon.findById(couponId);
+    if (!coupon) return res.status(404).json({ message: 'Coupon not found' });
+    if (coupon.isUsed) return res.status(400).json({ message: 'Coupon already used' });
+    const course = await Course.findById(coupon.courseId);
+    if (!course) return res.status(404).json({ message: 'Course not found' });
+    const sent = await sendCouponEmail(email, course.title, coupon.code, course.price);
+    if (sent) res.json({ message: `Coupon sent to ${email}` });
+    else res.status(500).json({ message: 'Failed to send email. Check BREVO_SMTP_USER/BREVO_SMTP_PASS and EMAIL_FROM_ADDRESS in .env' });
   } catch (error) { res.status(500).json({ message: error.message }); }
 });
 

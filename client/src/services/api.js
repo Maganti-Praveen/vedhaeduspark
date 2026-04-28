@@ -34,6 +34,7 @@ api.interceptors.response.use(
 export const authAPI = {
   register: (data) => api.post('/auth/register', data),
   login: (data) => api.post('/auth/login', data),
+  googleLogin: (credential) => api.post('/auth/google', { credential }),
   getMe: () => api.get('/auth/me'),
   updateProfile: (data) => api.put('/auth/profile', data),
   forgotPassword: (email) => api.post('/auth/forgot-password', { email }),
@@ -49,13 +50,26 @@ export const courseAPI = {
   delete: (id) => api.delete(`/courses/${id}`),
 };
 
-// Subject API
-export const subjectAPI = {
-  getAll: (courseId) => api.get('/subjects', { params: { courseId } }),
-  getById: (id) => api.get(`/subjects/${id}`),
-  create: (data) => api.post('/subjects', data),
-  update: (id, data) => api.put(`/subjects/${id}`, data),
-  delete: (id) => api.delete(`/subjects/${id}`),
+// E-Book API
+export const ebookAPI = {
+  getAll: () => api.get('/ebooks'),
+  getAdmin: () => api.get('/ebooks/admin'),
+  getById: (id) => api.get(`/ebooks/${id}`),
+  create: (data) => api.post('/ebooks', data),
+  update: (id, data) => api.put(`/ebooks/${id}`, data),
+  delete: (id) => api.delete(`/ebooks/${id}`),
+  requestAccess: (id, couponCode) => api.post(`/ebooks/${id}/access`, { couponCode }),
+  sendEmail: (id, email) => api.post(`/ebooks/${id}/send-email`, { email }),
+};
+
+// Resume Tools API
+export const resumeAPI = {
+  getSaved: () => api.get('/resume/saved'),
+  saveData: (data) => api.put('/resume/saved', data),
+  atsCheck: (resumeText, jobDescription) => api.post('/resume/ats-check', { resumeText, jobDescription }),
+  optimize: (resumeText, jobDescription) => api.post('/resume/optimize', { resumeText, jobDescription }),
+  generateSummary: (data) => api.post('/resume/generate-summary', data),
+  generatePdf: (data, template) => api.post('/resume/generate-pdf', { data, template }, { responseType: 'blob' }),
 };
 
 // Problem API
@@ -106,6 +120,7 @@ export const couponAPI = {
   generate: (data) => api.post('/coupons/generate', data),
   validate: (code, courseId) => api.post('/coupons/validate', { code, courseId }),
   delete: (id) => api.delete(`/coupons/${id}`),
+  sendEmail: (data) => api.post('/coupons/send-email', data),
 };
 
 // Upload API
@@ -163,6 +178,40 @@ export const resourceAPI = {
   create: (data) => api.post('/resources', data),
   update: (id, data) => api.put(`/resources/${id}`, data),
   delete: (id) => api.delete(`/resources/${id}`),
+};
+
+// Review API
+export const reviewAPI = {
+  getByCourse: (courseId) => api.get(`/reviews/${courseId}`),
+  create: (data) => api.post('/reviews', data),
+  delete: (id) => api.delete(`/reviews/${id}`),
+};
+
+// Leaderboard API
+export const leaderboardAPI = {
+  getAll: () => api.get('/leaderboard'),
+};
+
+// Quiz API
+export const quizAPI = {
+  getAll: () => api.get('/quizzes'),
+  getAdmin: () => api.get('/quizzes/admin'),
+  getById: (id) => api.get(`/quizzes/${id}`),
+  create: (data) => api.post('/quizzes', data),
+  update: (id, data) => api.put(`/quizzes/${id}`, data),
+  delete: (id) => api.delete(`/quizzes/${id}`),
+  submit: (id, data) => api.post(`/quizzes/${id}/submit`, data),
+  getAttempts: (id) => api.get(`/quizzes/${id}/attempts`),
+};
+
+// Event API
+export const eventAPI = {
+  getAll: () => api.get('/events'),
+  getAdmin: () => api.get('/events/admin'),
+  create: (data) => api.post('/events', data),
+  update: (id, data) => api.put(`/events/${id}`, data),
+  delete: (id) => api.delete(`/events/${id}`),
+  register: (id) => api.post(`/events/${id}/register`),
 };
 
 export default api;

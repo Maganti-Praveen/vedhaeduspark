@@ -1,10 +1,10 @@
 import { useState, useEffect } from 'react';
 import { NavLink, Outlet, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { HiHome, HiBookOpen, HiCode, HiUsers, HiMenu, HiX, HiLogout, HiPlus, HiTrash, HiPencil, HiAcademicCap, HiMail, HiChartBar, HiBriefcase, HiFolder, HiTicket } from 'react-icons/hi';
-import { FaPaperPlane } from 'react-icons/fa';
+import { HiHome, HiBookOpen, HiCode, HiUsers, HiMenu, HiX, HiLogout, HiPlus, HiTrash, HiPencil, HiAcademicCap, HiMail, HiChartBar, HiBriefcase, HiFolder, HiTicket, HiClipboardList, HiCalendar } from 'react-icons/hi';
+import { FaPaperPlane, FaBook } from 'react-icons/fa';
 import { useAuth } from '../../contexts/AuthContext';
-import { courseAPI, problemAPI, subjectAPI, adminAPI } from '../../services/api';
+import { courseAPI, problemAPI, adminAPI } from '../../services/api';
 import toast from 'react-hot-toast';
 
 const fadeUp = { hidden: { opacity: 0, y: 20 }, visible: (i = 0) => ({ opacity: 1, y: 0, transition: { delay: i * 0.08, duration: 0.4 } }) };
@@ -20,10 +20,12 @@ export const AdminLayout = () => {
     { path: '/admin/analytics', icon: <HiChartBar />, label: 'Analytics' },
     { path: '/admin/courses', icon: <HiBookOpen />, label: 'Courses' },
     { path: '/admin/coupons', icon: <HiTicket />, label: 'Coupons' },
-    { path: '/admin/subjects', icon: <HiAcademicCap />, label: 'Subjects' },
+    { path: '/admin/ebooks', icon: <FaBook />, label: 'E-Books' },
     { path: '/admin/problems', icon: <HiCode />, label: 'Problems' },
     { path: '/admin/jobs', icon: <HiBriefcase />, label: 'Jobs' },
     { path: '/admin/resources', icon: <HiFolder />, label: 'Resources' },
+    { path: '/admin/quizzes', icon: <HiClipboardList />, label: 'Quizzes' },
+    { path: '/admin/events', icon: <HiCalendar />, label: 'Events' },
     { path: '/admin/users', icon: <HiUsers />, label: 'Users' },
   ];
 
@@ -37,7 +39,7 @@ export const AdminLayout = () => {
               <div><span className="font-bold" style={{ color: 'var(--blue-700)' }}>VES</span><span className="text-xs ml-1 font-medium" style={{ color: 'var(--orange-500)' }}>Admin</span></div>
             </NavLink>
           </div>
-          <nav className="flex-1 p-4 space-y-1">
+          <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
             {links.map(l => (
               <NavLink key={l.path} to={l.path} end={l.end} className={({ isActive }) => `flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all ${isActive ? 'shadow-sm' : 'hover:bg-gray-50'}`}
                 style={({ isActive }) => ({ background: isActive ? 'var(--blue-50)' : 'transparent', color: isActive ? 'var(--blue-700)' : 'var(--gray-500)' })}>
@@ -61,10 +63,15 @@ export const AdminLayout = () => {
             <motion.div initial={{ x: -280 }} animate={{ x: 0 }} exit={{ x: -280 }} className="fixed inset-y-0 left-0 w-64 bg-white z-50 lg:hidden" style={{ borderRight: '1px solid var(--gray-200)' }}>
               <div className="flex flex-col h-full">
                 <div className="p-5"><span className="font-bold" style={{ color: 'var(--blue-700)' }}>VES</span><span className="text-xs ml-1" style={{ color: 'var(--orange-500)' }}>Admin</span></div>
-                <nav className="flex-1 p-4 space-y-1">
+                <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
                   {links.map(l => <NavLink key={l.path} to={l.path} end={l.end} onClick={() => setSidebarOpen(false)}
                     className="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium" style={{ color: 'var(--gray-500)' }}><span className="text-lg">{l.icon}</span>{l.label}</NavLink>)}
                 </nav>
+                <div className="p-4" style={{ borderTop: '1px solid var(--gray-200)' }}>
+                  <button onClick={() => { logout(); navigate('/'); }} className="flex items-center gap-2 px-4 py-2 w-full rounded-lg text-sm text-red-500 hover:bg-red-50 transition-all">
+                    <HiLogout /> Logout
+                  </button>
+                </div>
               </div>
             </motion.div>
           </>
@@ -361,16 +368,8 @@ const CrudPanel = ({ title, fetchFn, deleteFn, fields, createFn, updateFn }) => 
 // ============ ADMIN COURSES (standalone file) ============
 export { default as AdminCourses } from './AdminCourses';
 
-// ============ ADMIN SUBJECTS ============
-export const AdminSubjects = () => (
-  <CrudPanel title="Manage Subjects" fetchFn={() => subjectAPI.getAll()} deleteFn={(id) => subjectAPI.delete(id)} createFn={(d) => subjectAPI.create(d)} updateFn={(id, d) => subjectAPI.update(id, d)}
-    fields={[
-      { key: 'name', label: 'Name' },
-      { key: 'description', label: 'Description', type: 'textarea', fullWidth: true },
-      { key: 'icon', label: 'Icon (emoji)', placeholder: '🧮' },
-    ]}
-  />
-);
+// ============ ADMIN E-BOOKS (standalone file) ============
+export { default as AdminEbooks } from './AdminEbooks';
 
 // ============ ADMIN PROBLEMS (standalone file) ============
 export { default as AdminProblems } from './AdminProblems';

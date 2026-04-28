@@ -29,9 +29,14 @@ const MyCourses = () => {
 
   return (
     <div className="space-y-6">
-      <motion.div initial="hidden" animate="visible" variants={fadeUp}>
-        <h1 className="text-2xl font-bold mb-1" style={{ color: 'var(--gray-900)' }}>My Courses</h1>
-        <p style={{ color: 'var(--gray-500)' }}>Continue learning where you left off</p>
+      <motion.div initial="hidden" animate="visible" variants={fadeUp} className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold mb-1" style={{ color: 'var(--gray-900)' }}>My Courses</h1>
+          <p style={{ color: 'var(--gray-500)' }}>Continue learning where you left off</p>
+        </div>
+        <Link to="/courses" className="btn-primary !py-2.5 !px-5 !text-sm">
+          📚 Explore Courses
+        </Link>
       </motion.div>
 
       {enrollments.length === 0 ? (

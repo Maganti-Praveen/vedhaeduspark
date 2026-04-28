@@ -168,42 +168,42 @@ const Profile = () => {
         {/* Cover gradient */}
         <div className="h-28 sm:h-36" style={{ background: 'var(--gradient-hero)' }} />
 
-        <div className="px-6 sm:px-8 pb-8 -mt-14 sm:-mt-16">
-          {/* Avatar + Name */}
-          <div className="flex flex-col sm:flex-row sm:items-end gap-4 mb-6">
-            <div className="relative">
-              {displayUser?.avatar ? (
-                <img src={displayUser.avatar} alt="Avatar" className="w-28 h-28 rounded-2xl border-4 border-white shadow-lg object-cover" style={{ background: 'var(--gray-100)' }} />
-              ) : (
-                <div className="w-28 h-28 rounded-2xl border-4 border-white shadow-lg flex items-center justify-center text-white text-4xl font-bold"
-                  style={{ background: 'var(--gradient-blue)' }}>
-                  {displayUser?.name?.charAt(0).toUpperCase()}
-                </div>
-              )}
-              {displayUser?.streak > 0 && (
-                <div className="absolute -bottom-2 -right-2 flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold text-white shadow-md"
-                  style={{ background: 'var(--gradient-orange)' }}>
-                  <FaFire /> {displayUser.streak}
-                </div>
-              )}
-            </div>
-            <div className="flex-1">
-              <h2 className="text-xl sm:text-2xl font-bold" style={{ color: 'var(--gray-900)' }}>{displayUser?.name}</h2>
-              <p className="text-sm" style={{ color: 'var(--gray-500)' }}>{displayUser?.email}</p>
-              <div className="flex flex-wrap gap-2 mt-2">
-                <span className="px-3 py-1 rounded-full text-xs font-semibold" style={{
-                  background: displayUser?.role === 'admin' ? 'var(--orange-100)' : 'var(--blue-100)',
-                  color: displayUser?.role === 'admin' ? 'var(--orange-600)' : 'var(--blue-700)',
-                }}>{displayUser?.role?.toUpperCase()}</span>
-                {displayUser?.year && (
-                  <span className="px-3 py-1 rounded-full text-xs font-semibold" style={{ background: 'var(--gray-100)', color: 'var(--gray-600)' }}>
-                    {displayUser.year}
-                  </span>
-                )}
-                <span className="px-3 py-1 rounded-full text-xs font-semibold" style={{ background: '#dcfce7', color: '#16a34a' }}>
-                  <FaCalendar className="inline text-[0.6rem] mr-1" /> Joined {memberSince}
-                </span>
+        <div className="px-6 sm:px-8 pb-8">
+          {/* Avatar — overlaps cover */}
+          <div className="relative -mt-14 sm:-mt-16 mb-4 w-fit">
+            {displayUser?.avatar ? (
+              <img src={displayUser.avatar} alt="Avatar" className="w-28 h-28 rounded-2xl border-4 border-white shadow-lg object-cover" style={{ background: 'var(--gray-100)' }} />
+            ) : (
+              <div className="w-28 h-28 rounded-2xl border-4 border-white shadow-lg flex items-center justify-center text-white text-4xl font-bold"
+                style={{ background: 'var(--gradient-blue)' }}>
+                {displayUser?.name?.charAt(0).toUpperCase()}
               </div>
+            )}
+            {displayUser?.streak > 0 && (
+              <div className="absolute -bottom-2 -right-2 flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold text-white shadow-md"
+                style={{ background: 'var(--gradient-orange)' }}>
+                <FaFire /> {displayUser.streak}
+              </div>
+            )}
+          </div>
+
+          {/* Name + Email + Badges — fully below cover */}
+          <div className="mb-6">
+            <h2 className="text-xl sm:text-2xl font-bold" style={{ color: 'var(--gray-900)' }}>{displayUser?.name}</h2>
+            <p className="text-sm mt-0.5" style={{ color: 'var(--gray-500)' }}>{displayUser?.email}</p>
+            <div className="flex flex-wrap gap-2 mt-3">
+              <span className="px-3 py-1 rounded-full text-xs font-semibold" style={{
+                background: displayUser?.role === 'admin' ? 'var(--orange-100)' : 'var(--blue-100)',
+                color: displayUser?.role === 'admin' ? 'var(--orange-600)' : 'var(--blue-700)',
+              }}>{displayUser?.role?.toUpperCase()}</span>
+              {displayUser?.year && (
+                <span className="px-3 py-1 rounded-full text-xs font-semibold" style={{ background: 'var(--gray-100)', color: 'var(--gray-600)' }}>
+                  {displayUser.year}
+                </span>
+              )}
+              <span className="px-3 py-1 rounded-full text-xs font-semibold" style={{ background: '#dcfce7', color: '#16a34a' }}>
+                <FaCalendar className="inline text-[0.6rem] mr-1" /> Joined {memberSince}
+              </span>
             </div>
           </div>
 

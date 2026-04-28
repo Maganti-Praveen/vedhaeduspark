@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { NavLink, Outlet, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { HiHome, HiBookOpen, HiCode, HiFolder, HiUser, HiMenu, HiX, HiLogout, HiChartBar, HiAcademicCap, HiChatAlt2, HiLightningBolt, HiDocumentText, HiBriefcase } from 'react-icons/hi';
+import { HiHome, HiBookOpen, HiCode, HiFolder, HiUser, HiMenu, HiX, HiLogout, HiChartBar, HiAcademicCap, HiChatAlt2, HiLightningBolt, HiDocumentText, HiBriefcase, HiClipboardList, HiCalendar } from 'react-icons/hi';
 import { useAuth } from '../../contexts/AuthContext';
 import NotificationBell from '../common/NotificationBell';
 
@@ -21,8 +21,13 @@ const DashboardLayout = () => {
     { path: '/dashboard/ai-assistant', icon: <HiLightningBolt />, label: 'AI Assistant' },
     { path: '/dashboard/certificates', icon: <HiDocumentText />, label: 'Certificates' },
     { path: '/dashboard/jobs', icon: <HiBriefcase />, label: 'Jobs' },
+    { path: '/dashboard/resume-tools', icon: <HiDocumentText />, label: 'Resume Tools' },
     { path: '/dashboard/progress', icon: <HiChartBar />, label: 'Progress' },
     { path: '/dashboard/resources', icon: <HiFolder />, label: 'Resources' },
+    { path: '/dashboard/ebooks', icon: <HiBookOpen />, label: 'E-Books' },
+    { path: '/dashboard/leaderboard', icon: <HiChartBar />, label: 'Leaderboard' },
+    { path: '/dashboard/quizzes', icon: <HiClipboardList />, label: 'Quizzes' },
+    { path: '/dashboard/events', icon: <HiCalendar />, label: 'Events' },
     { path: '/dashboard/profile', icon: <HiUser />, label: 'Profile' },
   ];
 
@@ -30,13 +35,12 @@ const DashboardLayout = () => {
     <div className="flex flex-col h-full">
       <div className="p-5" style={{ borderBottom: '1px solid var(--gray-200)' }}>
         <NavLink to="/" className="flex items-center gap-2.5">
-          <div className="w-9 h-9 rounded-lg flex items-center justify-center font-bold text-white text-sm"
-            style={{ background: 'var(--gradient-orange)' }}>V</div>
+          <img src="/logo.png" alt="VedhaEduSpark" className="w-9 h-9 rounded-lg object-contain" />
           <span className="font-bold" style={{ color: 'var(--blue-700)' }}>VES</span>
         </NavLink>
       </div>
 
-      <nav className="flex-1 p-4 space-y-1">
+      <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
         {links.map((link) => (
           <NavLink key={link.path} to={link.path} end={link.end} onClick={() => setSidebarOpen(false)}
             className={({ isActive }) =>

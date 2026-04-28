@@ -8,48 +8,66 @@ import Navbar from './components/landing/Navbar';
 import Footer from './components/landing/Footer';
 import DashboardLayout from './components/dashboard/DashboardLayout';
 
+// Retry wrapper for lazy imports — handles Vite chunk loading failures
+const lazyRetry = (importFn) =>
+  lazy(() =>
+    importFn().catch(() =>
+      new Promise((resolve) => {
+        // Wait and retry once before giving up
+        setTimeout(() => resolve(importFn()), 1500);
+      })
+    )
+  );
+
 // Lazy-loaded pages
-const Home = lazy(() => import('./pages/public/Home'));
-const Courses = lazy(() => import('./pages/public/Courses'));
-const About = lazy(() => import('./pages/public/About'));
-const Contact = lazy(() => import('./pages/public/Contact'));
-const Login = lazy(() => import('./pages/auth/Login'));
-const Register = lazy(() => import('./pages/auth/Register'));
-const ForgotPassword = lazy(() => import('./pages/auth/ForgotPassword'));
-const ResetPassword = lazy(() => import('./pages/auth/ResetPassword'));
-const DashboardHome = lazy(() => import('./pages/dashboard/DashboardHome'));
-const Learning = lazy(() => import('./pages/dashboard/Learning'));
-const Practice = lazy(() => import('./pages/dashboard/Practice'));
-const Progress = lazy(() => import('./pages/dashboard/Progress'));
-const Resources = lazy(() => import('./pages/dashboard/Resources'));
-const Profile = lazy(() => import('./pages/dashboard/Profile'));
-const MyCourses = lazy(() => import('./pages/dashboard/MyCourses'));
-const CourseView = lazy(() => import('./pages/dashboard/CourseView'));
-const Community = lazy(() => import('./pages/dashboard/Community'));
-const AIAssistant = lazy(() => import('./pages/dashboard/AIAssistant'));
-const Notifications = lazy(() => import('./pages/dashboard/Notifications'));
-const MyCertificates = lazy(() => import('./pages/dashboard/MyCertificates'));
-const Jobs = lazy(() => import('./pages/dashboard/Jobs'));
-const ProblemSolve = lazy(() => import('./pages/coding/ProblemSolve'));
+const Home = lazyRetry(() => import('./pages/public/Home'));
+const Courses = lazyRetry(() => import('./pages/public/Courses'));
+const About = lazyRetry(() => import('./pages/public/About'));
+const Contact = lazyRetry(() => import('./pages/public/Contact'));
+const NotFound = lazyRetry(() => import('./pages/public/NotFound'));
+const Login = lazyRetry(() => import('./pages/auth/Login'));
+const Register = lazyRetry(() => import('./pages/auth/Register'));
+const ForgotPassword = lazyRetry(() => import('./pages/auth/ForgotPassword'));
+const ResetPassword = lazyRetry(() => import('./pages/auth/ResetPassword'));
+const DashboardHome = lazyRetry(() => import('./pages/dashboard/DashboardHome'));
+const Learning = lazyRetry(() => import('./pages/dashboard/Learning'));
+const Practice = lazyRetry(() => import('./pages/dashboard/Practice'));
+const Progress = lazyRetry(() => import('./pages/dashboard/Progress'));
+const Resources = lazyRetry(() => import('./pages/dashboard/Resources'));
+const Profile = lazyRetry(() => import('./pages/dashboard/Profile'));
+const MyCourses = lazyRetry(() => import('./pages/dashboard/MyCourses'));
+const CourseView = lazyRetry(() => import('./pages/dashboard/CourseView'));
+const Community = lazyRetry(() => import('./pages/dashboard/Community'));
+const AIAssistant = lazyRetry(() => import('./pages/dashboard/AIAssistant'));
+const Notifications = lazyRetry(() => import('./pages/dashboard/Notifications'));
+const MyCertificates = lazyRetry(() => import('./pages/dashboard/MyCertificates'));
+const Jobs = lazyRetry(() => import('./pages/dashboard/Jobs'));
+const Leaderboard = lazyRetry(() => import('./pages/dashboard/Leaderboard'));
+const Quizzes = lazyRetry(() => import('./pages/dashboard/Quizzes'));
+const Events = lazyRetry(() => import('./pages/dashboard/Events'));
+const Ebooks = lazyRetry(() => import('./pages/dashboard/Ebooks'));
+const ResumeTools = lazyRetry(() => import('./pages/dashboard/ResumeTools'));
+const ProblemSolve = lazyRetry(() => import('./pages/coding/ProblemSolve'));
 
 // Admin — proper lazy imports (cached after first load = instant switching)
-const AdminLayout = lazy(() => import('./pages/admin/Admin').then(m => ({ default: m.AdminLayout })));
-const AdminDashboard = lazy(() => import('./pages/admin/Admin').then(m => ({ default: m.AdminDashboard })));
-const AdminCourses = lazy(() => import('./pages/admin/AdminCourses'));
-const AdminProblems = lazy(() => import('./pages/admin/AdminProblems'));
-const AdminAnalytics = lazy(() => import('./pages/admin/AdminAnalytics'));
-const AdminSubjects = lazy(() => import('./pages/admin/Admin').then(m => ({ default: m.AdminSubjects })));
-const AdminUsers = lazy(() => import('./pages/admin/Admin').then(m => ({ default: m.AdminUsers })));
-const AdminJobs = lazy(() => import('./pages/admin/AdminJobs'));
-const AdminResources = lazy(() => import('./pages/admin/AdminResources'));
-const AdminCoupons = lazy(() => import('./pages/admin/AdminCoupons'));
+const AdminLayout = lazyRetry(() => import('./pages/admin/Admin').then(m => ({ default: m.AdminLayout })));
+const AdminDashboard = lazyRetry(() => import('./pages/admin/Admin').then(m => ({ default: m.AdminDashboard })));
+const AdminCourses = lazyRetry(() => import('./pages/admin/AdminCourses'));
+const AdminProblems = lazyRetry(() => import('./pages/admin/AdminProblems'));
+const AdminAnalytics = lazyRetry(() => import('./pages/admin/AdminAnalytics'));
+const AdminEbooks = lazyRetry(() => import('./pages/admin/Admin').then(m => ({ default: m.AdminEbooks })));
+const AdminUsers = lazyRetry(() => import('./pages/admin/Admin').then(m => ({ default: m.AdminUsers })));
+const AdminJobs = lazyRetry(() => import('./pages/admin/AdminJobs'));
+const AdminResources = lazyRetry(() => import('./pages/admin/AdminResources'));
+const AdminCoupons = lazyRetry(() => import('./pages/admin/AdminCoupons'));
+const AdminQuizzes = lazyRetry(() => import('./pages/admin/AdminQuizzes'));
+const AdminEvents = lazyRetry(() => import('./pages/admin/AdminEvents'));
 
 const PageLoader = () => (
   <div className="min-h-screen flex items-center justify-center" style={{ background: 'var(--gray-50)' }}>
     <div className="text-center">
-      <div className="w-12 h-12 mx-auto mb-4 rounded-xl flex items-center justify-center font-bold text-white text-lg animate-pulse"
-        style={{ background: 'var(--gradient-orange)', boxShadow: 'var(--shadow-orange)' }}>V</div>
-      <p className="text-sm" style={{ color: 'var(--gray-400)' }}>Loading...</p>
+      <img src="/logo.png" alt="VedhaEduSpark" className="w-14 h-14 mx-auto mb-4 rounded-xl object-contain animate-pulse" />
+      <p className="text-sm font-medium" style={{ color: 'var(--gray-400)' }}>Loading...</p>
     </div>
   </div>
 );
@@ -111,6 +129,11 @@ function App() {
                 <Route path="jobs" element={<Jobs />} />
                 <Route path="progress" element={<Progress />} />
                 <Route path="resources" element={<Resources />} />
+                <Route path="leaderboard" element={<Leaderboard />} />
+                <Route path="quizzes" element={<Quizzes />} />
+                <Route path="events" element={<Events />} />
+                <Route path="ebooks" element={<Ebooks />} />
+                <Route path="resume-tools" element={<ResumeTools />} />
                 <Route path="profile" element={<Profile />} />
               </Route>
 
@@ -123,12 +146,17 @@ function App() {
                 <Route path="analytics" element={<AdminAnalytics />} />
                 <Route path="courses" element={<AdminCourses />} />
                 <Route path="coupons" element={<AdminCoupons />} />
-                <Route path="subjects" element={<AdminSubjects />} />
+                <Route path="ebooks" element={<AdminEbooks />} />
                 <Route path="problems" element={<AdminProblems />} />
                 <Route path="jobs" element={<AdminJobs />} />
                 <Route path="resources" element={<AdminResources />} />
+                <Route path="quizzes" element={<AdminQuizzes />} />
+                <Route path="events" element={<AdminEvents />} />
                 <Route path="users" element={<AdminUsers />} />
               </Route>
+
+              {/* 404 Catch-All */}
+              <Route path="*" element={<NotFound />} />
             </Routes>
           </Suspense>
         </Router>

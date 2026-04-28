@@ -65,9 +65,11 @@ router.get('/:enrollmentId/generate', protect, async (req, res) => {
     doc.save().translate(40, h - 40).moveTo(0, -cornerSize).lineTo(0, 0).lineTo(cornerSize, 0).lineWidth(4).stroke('#f59e0b').restore();
     doc.save().translate(w - 40, h - 40).moveTo(0, -cornerSize).lineTo(0, 0).lineTo(-cornerSize, 0).lineWidth(4).stroke('#f59e0b').restore();
 
-    // Logo text
-    doc.fontSize(14).font('Helvetica-Bold').fillColor('#2563eb').text('VEDHAEDUSPARK', 0, 60, { align: 'center' });
-    doc.fontSize(8).fillColor('#94a3b8').text('Learning • Coding • Excellence', 0, 78, { align: 'center' });
+    // Logo
+    const path = require('path');
+    const logoPath = path.join(__dirname, '..', '..', 'assets', 'logo.png');
+    try { doc.image(logoPath, w / 2 - 30, 45, { width: 60, height: 60 }); } catch {}
+    doc.fontSize(10).font('Helvetica-Bold').fillColor('#2563eb').text('VEDHAEDUSPARK CENTRE', 0, 110, { align: 'center' });
 
     // Title
     doc.moveDown(2);

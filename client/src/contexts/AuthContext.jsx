@@ -45,10 +45,22 @@ export const AuthProvider = ({ children }) => {
     localStorage.removeItem('ves_user');
   };
 
+  const googleLogin = async (credential) => {
+    setLoading(true);
+    try {
+      const { data } = await authAPI.googleLogin(credential);
+      setUser(data);
+      localStorage.setItem('ves_user', JSON.stringify(data));
+      return data;
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const isAdmin = user?.role === 'admin';
 
   return (
-    <AuthContext.Provider value={{ user, login, register, logout, loading, isAdmin }}>
+    <AuthContext.Provider value={{ user, login, register, googleLogin, logout, loading, isAdmin }}>
       {children}
     </AuthContext.Provider>
   );

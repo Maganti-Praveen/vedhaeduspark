@@ -18,7 +18,7 @@ app.use(express.json({ limit: '10mb' }));
 // Routes
 app.use('/api/auth', require('./routes/auth'));
 app.use('/api/courses', require('./routes/courses'));
-app.use('/api/subjects', require('./routes/subjects'));
+app.use('/api/ebooks', require('./routes/ebooks'));
 app.use('/api/problems', require('./routes/problems'));
 app.use('/api/submissions', require('./routes/submissions'));
 app.use('/api/enrollments', require('./routes/enrollments'));
@@ -32,6 +32,11 @@ app.use('/api/certificates', require('./routes/certificates'));
 app.use('/api/jobs', require('./routes/jobs'));
 app.use('/api/resources', require('./routes/resources'));
 app.use('/api/coupons', require('./routes/coupons'));
+app.use('/api/reviews', require('./routes/reviews'));
+app.use('/api/leaderboard', require('./routes/leaderboard'));
+app.use('/api/quizzes', require('./routes/quizzes'));
+app.use('/api/events', require('./routes/events'));
+app.use('/api/resume', require('./routes/resume'));
 
 // Health check
 app.get('/api/health', (req, res) => {

@@ -1,142 +1,155 @@
 const nodemailer = require('nodemailer');
 
-// ─── Brevo SMTP Transport ────────────────────────────────────
 const transporter = nodemailer.createTransport({
   host: process.env.BREVO_SMTP_HOST || 'smtp-relay.brevo.com',
-  port: parseInt(process.env.BREVO_SMTP_PORT) || 587,
-  secure: false, // true for 465, false for 587
+  port: Number(process.env.BREVO_SMTP_PORT) || 587,
+  secure: false,
   auth: {
     user: process.env.BREVO_SMTP_USER,
     pass: process.env.BREVO_SMTP_PASS,
   },
 });
 
-const FROM = `"${process.env.EMAIL_FROM_NAME || 'VedhaEduSpark'}" <${process.env.EMAIL_FROM_ADDRESS || 'noreply@vedhaeduspark.com'}>`;
+const FROM = () => `"${process.env.EMAIL_FROM_NAME || 'VedhaEduSpark'}" <${process.env.EMAIL_FROM_ADDRESS || process.env.BREVO_SMTP_USER}>`;
 
-// ─── Base Send Function ──────────────────────────────────────
-const sendEmail = async (to, subject, html) => {
+// Logo URL — update this with your deployed URL or Cloudinary-hosted logo
+const LOGO_URL = process.env.LOGO_URL || 'https://raw.githubusercontent.com/Maganti-Praveen/vedhaeduspark/main/assets/logo.png';
+
+// Shared email header with logo
+const emailHeader = (title, gradient = 'linear-gradient(135deg,#1a56db,#7c3aed)') => `
+  <div style="background:${gradient};padding:30px 24px;text-align:center">
+    <img src="${LOGO_URL}" alt="VedhaEduSpark" style="width:60px;height:60px;border-radius:12px;margin-bottom:10px" />
+    <h1 style="color:#fff;margin:0;font-size:22px">${title}</h1>
+    <p style="color:rgba(255,255,255,0.8);margin:8px 0 0;font-size:13px">VedhaEduSpark Centre</p>
+  </div>`;
+
+const emailFooter = () => `
+  <div style="background:#f8fafc;padding:16px 24px;text-align:center;border-top:1px solid #e2e8f0">
+    <p style="color:#94a3b8;font-size:11px;margin:0">© ${new Date().getFullYear()} VedhaEduSpark Centre. All rights reserved.</p>
+  </div>`;
+
+const emailWrap = (content) => `
+  <div style="font-family:'Segoe UI',Roboto,sans-serif;max-width:500px;margin:0 auto;background:#ffffff;border-radius:16px;overflow:hidden;border:1px solid #e2e8f0">
+    ${content}
+  </div>`;
+
+// ─── Coupon Email ─────────────────────────────
+const sendCouponEmail = async (to, courseName, couponCode, price) => {
+  const html = emailWrap(`
+    ${emailHeader('🎟️ Your Coupon Code')}
+    <div style="padding:28px 24px">
+      <p style="color:#334155;font-size:14px;line-height:1.7;margin:0 0 16px">
+        Thank you for your payment of <strong>₹${price}</strong> for the course <strong>"${courseName}"</strong>. 
+        Here is your coupon code:
+      </p>
+      <div style="background:#f1f5f9;border-radius:12px;padding:20px;text-align:center;margin:0 0 20px">
+        <div style="font-size:28px;font-weight:800;letter-spacing:4px;color:#1a56db;font-family:monospace">${couponCode}</div>
+      </div>
+      <p style="color:#64748b;font-size:13px;line-height:1.6;margin:0 0 12px">
+        📌 Go to <strong>Courses</strong> → Click <strong>"Enroll Now"</strong> on "${courseName}" → Enter the coupon code above.
+      </p>
+      <p style="color:#94a3b8;font-size:11px;margin:16px 0 0;padding-top:16px;border-top:1px solid #e2e8f0">
+        ⚠️ This coupon is single-use and valid for this course only. Do not share it with others.
+      </p>
+    </div>
+    ${emailFooter()}
+  `);
+
   try {
-    const info = await transporter.sendMail({ from: FROM, to, subject, html });
-    console.log(`📧 Email sent to ${to}: ${info.messageId}`);
-    return info;
-  } catch (error) {
-    console.error(`❌ Email failed to ${to}:`, error.message);
-    throw error;
+    await transporter.sendMail({ from: FROM(), to, subject: `🎟️ Your Coupon for "${courseName}" — VedhaEduSpark`, html });
+    return true;
+  } catch (err) {
+    console.error('Email send failed:', err.message);
+    return false;
   }
 };
 
-// ─── Shared HTML Wrapper ─────────────────────────────────────
-const wrapTemplate = (body) => `
-<!DOCTYPE html>
-<html>
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <style>
-    body { margin: 0; padding: 0; background: #f4f6f8; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
-    .container { max-width: 600px; margin: 40px auto; background: #ffffff; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 24px rgba(0,0,0,0.08); }
-    .header { background: linear-gradient(135deg, #1e3a5f 0%, #1a56db 50%, #3b82f6 100%); padding: 32px 40px; text-align: center; }
-    .header h1 { margin: 0; color: #ffffff; font-size: 24px; font-weight: 700; letter-spacing: -0.5px; }
-    .header .logo { display: inline-block; width: 48px; height: 48px; background: linear-gradient(135deg, #ea580c, #fb923c); border-radius: 12px; line-height: 48px; color: #fff; font-weight: 800; font-size: 22px; margin-bottom: 12px; }
-    .body { padding: 40px; }
-    .body h2 { color: #111827; font-size: 20px; margin: 0 0 16px; }
-    .body p { color: #4b5563; font-size: 15px; line-height: 1.7; margin: 0 0 16px; }
-    .btn { display: inline-block; padding: 14px 36px; background: linear-gradient(135deg, #ea580c, #fb923c); color: #ffffff !important; text-decoration: none; border-radius: 50px; font-weight: 600; font-size: 15px; margin: 8px 0 24px; }
-    .btn-blue { background: linear-gradient(135deg, #1a56db, #3b82f6); }
-    .divider { height: 1px; background: #e5e7eb; margin: 24px 0; }
-    .footer { padding: 24px 40px; text-align: center; background: #f9fafb; }
-    .footer p { color: #9ca3af; font-size: 12px; margin: 0; }
-    .footer a { color: #3b82f6; text-decoration: none; }
-    .highlight { background: #eff6ff; border-left: 4px solid #3b82f6; padding: 16px 20px; border-radius: 0 8px 8px 0; margin: 16px 0; }
-    .highlight p { color: #1e3a5f; margin: 0; font-size: 14px; }
-  </style>
-</head>
-<body>
-  <div class="container">
-    <div class="header">
-      <div class="logo">V</div>
-      <h1>VedhaEduSpark</h1>
-    </div>
-    ${body}
-  </div>
-</body>
-</html>`;
-
-// ─── Welcome Email ───────────────────────────────────────────
+// ─── Welcome Email ─────────────────────────────
 const sendWelcomeEmail = async (name, email) => {
-  const subject = '🎉 Welcome to VedhaEduSpark!';
-  const html = wrapTemplate(`
-    <div class="body">
-      <h2>Welcome aboard, ${name}! 👋</h2>
-      <p>Thank you for joining <strong>VedhaEduSpark</strong> — your all-in-one CSE learning platform.</p>
-      <p>Here's what you can do now:</p>
-      <div class="highlight">
-        <p>📚 <strong>Learn</strong> — DSA, DBMS, OS, CN with structured notes & videos</p>
-      </div>
-      <div class="highlight">
-        <p>💻 <strong>Practice</strong> — Solve coding problems with our built-in IDE</p>
-      </div>
-      <div class="highlight">
-        <p>📊 <strong>Track</strong> — Monitor your progress and skill growth</p>
-      </div>
-      <p style="margin-top: 24px;">Ready to start learning?</p>
-      <a href="${process.env.CLIENT_URL || 'http://localhost:5173'}/dashboard" class="btn">Go to Dashboard →</a>
-      <p>If you have any questions, feel free to reach out to us anytime.</p>
+  const html = emailWrap(`
+    ${emailHeader('Welcome to VedhaEduSpark! 🎉')}
+    <div style="padding:28px 24px">
+      <p style="color:#334155;font-size:14px;line-height:1.7">Hi <strong>${name}</strong>,</p>
+      <p style="color:#334155;font-size:14px;line-height:1.7">Your account has been created successfully. Start learning courses, solving problems, and tracking your progress today!</p>
     </div>
-    <div class="footer">
-      <p>© ${new Date().getFullYear()} VedhaEduSpark Centre. All rights reserved.</p>
-      <p><a href="${process.env.CLIENT_URL || 'http://localhost:5173'}">Visit Website</a></p>
-    </div>
+    ${emailFooter()}
   `);
-  return sendEmail(email, subject, html);
+
+  try {
+    await transporter.sendMail({ from: FROM(), to: email, subject: 'Welcome to VedhaEduSpark! 🎉', html });
+    return true;
+  } catch (err) {
+    console.error('Welcome email failed:', err.message);
+    return false;
+  }
 };
 
-// ─── Password Reset Email ────────────────────────────────────
+// ─── Reset Password Email ──────────────────────
 const sendResetPasswordEmail = async (name, email, resetUrl) => {
-  const subject = '🔐 Reset Your Password — VedhaEduSpark';
-  const html = wrapTemplate(`
-    <div class="body">
-      <h2>Password Reset Request</h2>
-      <p>Hi <strong>${name}</strong>,</p>
-      <p>We received a request to reset the password for your VedhaEduSpark account. Click the button below to create a new password:</p>
-      <a href="${resetUrl}" class="btn btn-blue">Reset Password →</a>
-      <div class="highlight">
-        <p>⏰ This link is valid for <strong>15 minutes</strong> only. After that, you'll need to request a new one.</p>
+  const html = emailWrap(`
+    ${emailHeader('🔒 Reset Your Password', 'linear-gradient(135deg,#ef4444,#f59e0b)')}
+    <div style="padding:28px 24px">
+      <p style="color:#334155;font-size:14px;line-height:1.7">Hi <strong>${name}</strong>,</p>
+      <p style="color:#334155;font-size:14px;line-height:1.7">We received a request to reset your password. Click the button below to set a new password:</p>
+      <div style="text-align:center;margin:24px 0">
+        <a href="${resetUrl}" style="display:inline-block;background:linear-gradient(135deg,#1a56db,#7c3aed);color:#fff;text-decoration:none;padding:14px 32px;border-radius:12px;font-weight:700;font-size:14px">Reset Password</a>
       </div>
-      <div class="divider"></div>
-      <p style="font-size: 13px; color: #9ca3af;">If you didn't request this, you can safely ignore this email. Your password won't be changed.</p>
+      <p style="color:#64748b;font-size:12px;line-height:1.6">If you didn't request this, please ignore this email. This link expires in 15 minutes.</p>
+      <p style="color:#94a3b8;font-size:11px;margin-top:16px;padding-top:16px;border-top:1px solid #e2e8f0;word-break:break-all">Link: ${resetUrl}</p>
     </div>
-    <div class="footer">
-      <p>© ${new Date().getFullYear()} VedhaEduSpark Centre. All rights reserved.</p>
-      <p><a href="${process.env.CLIENT_URL || 'http://localhost:5173'}">Visit Website</a></p>
-    </div>
+    ${emailFooter()}
   `);
-  return sendEmail(email, subject, html);
+
+  try {
+    await transporter.sendMail({ from: FROM(), to: email, subject: '🔒 Reset Your Password — VedhaEduSpark', html });
+    return true;
+  } catch (err) {
+    console.error('Reset email failed:', err.message);
+    return false;
+  }
 };
 
-// ─── Admin Notification Email ────────────────────────────────
+// ─── Admin Notification Email ──────────────────
 const sendNotificationEmail = async (name, email, subject, content) => {
-  const html = wrapTemplate(`
-    <div class="body">
-      <h2>${subject}</h2>
-      <p>Hi <strong>${name}</strong>,</p>
-      <div style="white-space: pre-wrap; color: #374151; font-size: 15px; line-height: 1.8; margin: 16px 0;">
-${content}
-      </div>
-      <div class="divider"></div>
-      <p style="font-size: 13px; color: #9ca3af;">This notification was sent by the VedhaEduSpark team.</p>
+  const html = emailWrap(`
+    ${emailHeader(`📢 ${subject}`)}
+    <div style="padding:28px 24px">
+      <p style="color:#334155;font-size:14px;line-height:1.7">Hi <strong>${name}</strong>,</p>
+      <p style="color:#334155;font-size:14px;line-height:1.7">${content}</p>
     </div>
-    <div class="footer">
-      <p>© ${new Date().getFullYear()} VedhaEduSpark Centre. All rights reserved.</p>
-      <p><a href="${process.env.CLIENT_URL || 'http://localhost:5173'}">Visit Website</a></p>
-    </div>
+    ${emailFooter()}
   `);
-  return sendEmail(email, subject, html);
+
+  try {
+    await transporter.sendMail({ from: FROM(), to: email, subject: `📢 ${subject} — VedhaEduSpark`, html });
+    return true;
+  } catch (err) {
+    console.error('Notification email failed:', err.message);
+    return false;
+  }
 };
 
-module.exports = {
-  sendEmail,
-  sendWelcomeEmail,
-  sendResetPasswordEmail,
-  sendNotificationEmail,
-};
+// ─── E-Book Email ──────────────────────────────
+async function sendEbookEmail(email, ebookTitle, pdfUrl, author) {
+  const html = emailWrap(`
+    ${emailHeader('📚 Your E-Book is Here!', 'linear-gradient(135deg,#7c3aed,#2563eb)')}
+    <div style="padding:28px 24px">
+      <p style="color:#334155;font-size:14px;line-height:1.7;margin:0 0 6px">Your e-book <strong>"${ebookTitle}"</strong> by <em>${author}</em> is ready!</p>
+      <div style="text-align:center;margin:24px 0">
+        <a href="${pdfUrl}" style="display:inline-block;background:linear-gradient(135deg,#7c3aed,#2563eb);color:#fff;text-decoration:none;padding:14px 32px;border-radius:12px;font-weight:700;font-size:14px">📥 Download PDF</a>
+      </div>
+      <p style="color:#64748b;font-size:12px;line-height:1.6">If the button doesn't work, copy this link:<br><a href="${pdfUrl}" style="color:#2563eb;word-break:break-all">${pdfUrl}</a></p>
+    </div>
+    ${emailFooter()}
+  `);
+
+  try {
+    await transporter.sendMail({ from: FROM(), to: email, subject: `📚 Your E-Book: "${ebookTitle}" — VedhaEduSpark`, html });
+    return true;
+  } catch (err) {
+    console.error('E-Book email failed:', err.message);
+    return false;
+  }
+}
+
+module.exports = { sendCouponEmail, sendWelcomeEmail, sendResetPasswordEmail, sendNotificationEmail, sendEbookEmail };

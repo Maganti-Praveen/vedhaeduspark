@@ -223,9 +223,18 @@ const Courses = () => {
                   {enrolling ? 'Validating...' : '✨ Enroll with Coupon'}
                 </button>
 
-                <p className="text-[0.6rem] text-center leading-relaxed" style={{ color: 'var(--gray-400)' }}>
-                  Don't have a coupon? Contact admin after payment to receive one.
-                </p>
+                {/* Payment Instructions */}
+                <div className="p-3.5 rounded-xl" style={{ background: '#fef3c7', border: '1px solid #fcd34d' }}>
+                  <p className="text-xs font-bold mb-1.5" style={{ color: '#92400e' }}>💳 How to Pay</p>
+                  <p className="text-[0.7rem] leading-relaxed" style={{ color: '#78350f' }}>
+                    Pay <strong>₹{enrollPopup.price}</strong> and send payment screenshot, your email ID &amp; course name to:
+                  </p>
+                  <div className="mt-1.5 space-y-0.5">
+                    <p className="text-[0.7rem] font-bold" style={{ color: '#92400e' }}>📧 vedhaedusparkcenter@gmail.com</p>
+                    <p className="text-[0.7rem] font-bold" style={{ color: '#92400e' }}>📱 9391640022</p>
+                  </div>
+                  <p className="text-[0.6rem] mt-1.5" style={{ color: '#a16207' }}>You'll receive a coupon code after verification.</p>
+                </div>
               </div>
             </motion.div>
           </div>

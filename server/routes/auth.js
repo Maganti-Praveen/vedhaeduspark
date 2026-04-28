@@ -65,6 +65,59 @@ router.post('/login', async (req, res) => {
   }
 });
 
+// POST /api/auth/google — Google OAuth login/register
+router.post('/google', async (req, res) => {
+  try {
+    const { credential } = req.body;
+    if (!credential) return res.status(400).json({ message: 'Google credential is required' });
+
+    // Decode the Google JWT token (header.payload.signature)
+    const parts = credential.split('.');
+    if (parts.length !== 3) return res.status(400).json({ message: 'Invalid Google token' });
+
+    const payload = JSON.parse(Buffer.from(parts[1], 'base64url').toString());
+    const { sub: googleId, email, name, picture, email_verified } = payload;
+
+    if (!email_verified) return res.status(400).json({ message: 'Google email not verified' });
+
+    // Check if user exists
+    let user = await User.findOne({ email });
+
+    if (user) {
+      // Existing user — update googleId if not set
+      if (!user.googleId) {
+        user.googleId = googleId;
+        user.authProvider = user.authProvider === 'local' ? 'local' : 'google';
+        if (picture && !user.avatar) user.avatar = picture;
+        await user.save();
+      }
+    } else {
+      // New user — create account
+      user = await User.create({
+        name,
+        email,
+        googleId,
+        authProvider: 'google',
+        avatar: picture || '',
+      });
+      sendWelcomeEmail(name, email).catch(() => {});
+      createNotification(user._id, 'welcome', 'Welcome to VedhaEduSpark! 🎉', 'Start your learning journey. Explore courses and practice coding problems.', '/dashboard');
+    }
+
+    res.json({
+      _id: user._id,
+      name: user.name,
+      email: user.email,
+      role: user.role,
+      avatar: user.avatar,
+      token: generateToken(user._id),
+    });
+  } catch (error) {
+    console.error('Google auth error:', error.message);
+    res.status(500).json({ message: 'Google authentication failed' });
+  }
+});
+
 // GET /api/auth/me
 router.get('/me', protect, async (req, res) => {
   try {

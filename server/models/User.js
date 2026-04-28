@@ -6,8 +6,10 @@ const userSchema = new mongoose.Schema({
   // ─── Core ──────────────────────────────────
   name: { type: String, required: true, trim: true },
   email: { type: String, required: true, unique: true, lowercase: true, trim: true },
-  password: { type: String, required: true, minlength: 6 },
+  password: { type: String, minlength: 6 },
   role: { type: String, enum: ['user', 'admin'], default: 'user' },
+  googleId: { type: String, default: '' },
+  authProvider: { type: String, enum: ['local', 'google'], default: 'local' },
 
   // ─── Profile ───────────────────────────────
   avatar: { type: String, default: '' },
@@ -47,6 +49,7 @@ userSchema.pre('save', async function(next) {
 
 // ─── Methods ────────────────────────────────────
 userSchema.methods.matchPassword = async function(enteredPassword) {
+  if (!this.password) return false;
   return await bcrypt.compare(enteredPassword, this.password);
 };
 

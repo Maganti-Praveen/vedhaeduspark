@@ -1,9 +1,11 @@
-import { useState } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { FaUser, FaEnvelope, FaLock, FaEye, FaEyeSlash } from 'react-icons/fa';
 import { useAuth } from '../../contexts/AuthContext';
 import toast from 'react-hot-toast';
+
+const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID;
 
 const Register = () => {
   const [name, setName] = useState('');
@@ -11,8 +13,35 @@ const Register = () => {
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [showPass, setShowPass] = useState(false);
-  const { register, loading } = useAuth();
+  const { register, googleLogin, loading } = useAuth();
   const navigate = useNavigate();
+
+  const handleGoogleResponse = useCallback(async (response) => {
+    if (response.credential) {
+      try {
+        const data = await googleLogin(response.credential);
+        toast.success(`Welcome, ${data.name}!`);
+        navigate('/dashboard');
+      } catch (err) { toast.error(err.response?.data?.message || 'Google signup failed'); }
+    }
+  }, [googleLogin, navigate]);
+
+  useEffect(() => {
+    if (!GOOGLE_CLIENT_ID) return;
+    const loadGoogleScript = () => {
+      if (document.getElementById('google-gsi-reg')) return;
+      const script = document.createElement('script');
+      script.id = 'google-gsi-reg';
+      script.src = 'https://accounts.google.com/gsi/client';
+      script.async = true; script.defer = true;
+      script.onload = () => {
+        window.google?.accounts?.id?.initialize({ client_id: GOOGLE_CLIENT_ID, callback: handleGoogleResponse });
+        window.google?.accounts?.id?.renderButton(document.getElementById('google-signup-btn'), { theme: 'outline', size: 'large', width: '100%', text: 'signup_with', shape: 'pill' });
+      };
+      document.body.appendChild(script);
+    };
+    loadGoogleScript();
+  }, [handleGoogleResponse]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -31,12 +60,22 @@ const Register = () => {
         <div className="bg-white rounded-[20px] p-10 shadow-xl" style={{ border: '1px solid var(--gray-200)' }}>
           <div className="text-center mb-8">
             <Link to="/" className="inline-block mb-6">
-              <div className="w-14 h-14 rounded-xl flex items-center justify-center font-bold text-white text-2xl shadow-lg mx-auto"
-                style={{ background: 'var(--gradient-orange)', boxShadow: 'var(--shadow-orange)' }}>V</div>
+              <img src="/logo.png" alt="VedhaEduSpark" className="w-16 h-16 mx-auto rounded-xl object-contain shadow-lg" />
             </Link>
             <h1 className="text-2xl font-bold" style={{ color: 'var(--gray-900)' }}>Create Account</h1>
             <p className="text-sm mt-1" style={{ color: 'var(--gray-500)' }}>Join VedhaEduSpark and start learning</p>
           </div>
+
+          {GOOGLE_CLIENT_ID && (
+            <>
+              <div id="google-signup-btn" className="flex justify-center mb-4" />
+              <div className="flex items-center gap-3 mb-5">
+                <div className="flex-1 h-px" style={{ background: 'var(--gray-200)' }} />
+                <span className="text-xs font-medium" style={{ color: 'var(--gray-400)' }}>or sign up with email</span>
+                <div className="flex-1 h-px" style={{ background: 'var(--gray-200)' }} />
+              </div>
+            </>
+          )}
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>

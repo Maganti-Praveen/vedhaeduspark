@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { HiPlus, HiTrash, HiX, HiTicket, HiClipboardCopy } from 'react-icons/hi';
+import { HiPlus, HiTrash, HiX, HiTicket, HiClipboardCopy, HiMail } from 'react-icons/hi';
 import { couponAPI } from '../../services/api';
 import toast from 'react-hot-toast';
 
@@ -59,6 +59,15 @@ const AdminCoupons = () => {
   };
 
   const copyCode = (code) => { navigator.clipboard.writeText(code); toast.success(`Copied: ${code}`); };
+
+  const sendCouponEmail = async (couponId) => {
+    const email = prompt('Enter user email to send this coupon to:');
+    if (!email || !email.includes('@')) return;
+    try {
+      const { data } = await couponAPI.sendEmail({ couponId, email });
+      toast.success(data.message);
+    } catch (err) { toast.error(err.response?.data?.message || 'Failed to send email'); }
+  };
 
   return (
     <div className="space-y-6">
@@ -154,9 +163,14 @@ const AdminCoupons = () => {
                         {new Date(cp.createdAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}
                       </td>
                       <td className="py-2.5 px-3">
-                        {!cp.isUsed && (
-                          <button onClick={() => handleDelete(cp._id)} className="p-1.5 rounded-lg hover:bg-red-50 text-red-500"><HiTrash /></button>
-                        )}
+                        <div className="flex gap-1">
+                          {!cp.isUsed && (
+                            <>
+                              <button onClick={() => sendCouponEmail(cp._id)} className="p-1.5 rounded-lg hover:bg-blue-50" style={{ color: 'var(--blue-600)' }} title="Send via email"><HiMail /></button>
+                              <button onClick={() => handleDelete(cp._id)} className="p-1.5 rounded-lg hover:bg-red-50 text-red-500" title="Delete"><HiTrash /></button>
+                            </>
+                          )}
+                        </div>
                       </td>
                     </tr>
                   ))}
