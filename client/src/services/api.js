@@ -39,6 +39,7 @@ export const authAPI = {
   updateProfile: (data) => api.put('/auth/profile', data),
   forgotPassword: (email) => api.post('/auth/forgot-password', { email }),
   resetPassword: (token, password) => api.post(`/auth/reset-password/${token}`, { password }),
+  createAdmin: (data) => api.post('/auth/create-admin', data),
 };
 
 // Course API

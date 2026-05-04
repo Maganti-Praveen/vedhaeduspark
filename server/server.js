@@ -37,6 +37,7 @@ app.use('/api/leaderboard', require('./routes/leaderboard'));
 app.use('/api/quizzes', require('./routes/quizzes'));
 app.use('/api/events', require('./routes/events'));
 app.use('/api/resume', require('./routes/resume'));
+app.use('/api/subjects', require('./routes/subjects'));
 
 // Health check
 app.get('/api/health', (req, res) => {

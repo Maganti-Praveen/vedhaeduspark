@@ -29,6 +29,7 @@ const Login = lazyRetry(() => import('./pages/auth/Login'));
 const Register = lazyRetry(() => import('./pages/auth/Register'));
 const ForgotPassword = lazyRetry(() => import('./pages/auth/ForgotPassword'));
 const ResetPassword = lazyRetry(() => import('./pages/auth/ResetPassword'));
+const CreateAdmin = lazyRetry(() => import('./pages/auth/CreateAdmin'));
 const DashboardHome = lazyRetry(() => import('./pages/dashboard/DashboardHome'));
 const Learning = lazyRetry(() => import('./pages/dashboard/Learning'));
 const Practice = lazyRetry(() => import('./pages/dashboard/Practice'));
@@ -114,6 +115,7 @@ function App() {
               <Route path="/register" element={<Register />} />
               <Route path="/forgot-password" element={<ForgotPassword />} />
               <Route path="/reset-password/:token" element={<ResetPassword />} />
+              <Route path="/create-admin" element={<CreateAdmin />} />
 
               {/* Dashboard Routes (Protected) */}
               <Route path="/dashboard" element={<ProtectedRoute><DashboardLayout /></ProtectedRoute>}>

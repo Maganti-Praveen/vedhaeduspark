@@ -221,4 +221,59 @@ router.post('/reset-password/:token', async (req, res) => {
   }
 });
 
+// POST /api/auth/create-admin — Create admin account (requires secret code)
+router.post('/create-admin', async (req, res) => {
+  try {
+    const { secretCode, name, email, password } = req.body;
+
+    // Verify secret code
+    if (!secretCode || secretCode !== process.env.ADMIN_SECRET) {
+      return res.status(403).json({ message: 'Invalid secret code. Access denied.' });
+    }
+
+    if (!name || !email || !password) {
+      return res.status(400).json({ message: 'Please provide name, email, and password' });
+    }
+
+    if (password.length < 6) {
+      return res.status(400).json({ message: 'Password must be at least 6 characters' });
+    }
+
+    // Check if user already exists
+    const existingUser = await User.findOne({ email });
+    if (existingUser) {
+      if (existingUser.role === 'admin') {
+        return res.status(400).json({ message: 'An admin with this email already exists' });
+      }
+      // Upgrade existing user to admin
+      existingUser.role = 'admin';
+      await existingUser.save();
+      return res.json({
+        _id: existingUser._id,
+        name: existingUser.name,
+        email: existingUser.email,
+        role: 'admin',
+        token: generateToken(existingUser._id),
+        message: 'Existing user upgraded to admin',
+      });
+    }
+
+    // Create new admin user
+    const user = await User.create({ name, email, password, role: 'admin' });
+
+    sendWelcomeEmail(name, email).catch(() => {});
+    createNotification(user._id, 'welcome', 'Welcome Admin! 🎉', 'You have admin access to VedhaEduSpark.', '/admin');
+
+    res.status(201).json({
+      _id: user._id,
+      name: user.name,
+      email: user.email,
+      role: user.role,
+      token: generateToken(user._id),
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
 module.exports = router;

@@ -35,7 +35,7 @@ export const AdminLayout = () => {
         <div className="flex flex-col h-full">
           <div className="p-5" style={{ borderBottom: '1px solid var(--gray-200)' }}>
             <NavLink to="/" className="flex items-center gap-2.5">
-              <div className="w-9 h-9 rounded-lg flex items-center justify-center font-bold text-white text-sm" style={{ background: 'var(--gradient-orange)' }}>V</div>
+              <img src="/logo.png" alt="VedhaEduSpark" className="w-9 h-9 rounded-lg object-contain" />
               <div><span className="font-bold" style={{ color: 'var(--blue-700)' }}>VES</span><span className="text-xs ml-1 font-medium" style={{ color: 'var(--orange-500)' }}>Admin</span></div>
             </NavLink>
           </div>
@@ -62,7 +62,7 @@ export const AdminLayout = () => {
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setSidebarOpen(false)} className="fixed inset-0 bg-black/30 z-40 lg:hidden" />
             <motion.div initial={{ x: -280 }} animate={{ x: 0 }} exit={{ x: -280 }} className="fixed inset-y-0 left-0 w-64 bg-white z-50 lg:hidden" style={{ borderRight: '1px solid var(--gray-200)' }}>
               <div className="flex flex-col h-full">
-                <div className="p-5"><span className="font-bold" style={{ color: 'var(--blue-700)' }}>VES</span><span className="text-xs ml-1" style={{ color: 'var(--orange-500)' }}>Admin</span></div>
+                <div className="p-5 flex items-center gap-2"><img src="/logo.png" alt="VES" className="w-8 h-8 rounded-lg object-contain" /><span className="font-bold" style={{ color: 'var(--blue-700)' }}>VES</span><span className="text-xs ml-1" style={{ color: 'var(--orange-500)' }}>Admin</span></div>
                 <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
                   {links.map(l => <NavLink key={l.path} to={l.path} end={l.end} onClick={() => setSidebarOpen(false)}
                     className="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium" style={{ color: 'var(--gray-500)' }}><span className="text-lg">{l.icon}</span>{l.label}</NavLink>)}
