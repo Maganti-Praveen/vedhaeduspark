@@ -79,11 +79,25 @@ router.get('/analytics', protect, admin, async (req, res) => {
   }
 });
 
-// GET /api/admin/users
+// GET /api/admin/users — with optional pagination & search
 router.get('/users', protect, admin, async (req, res) => {
   try {
-    const users = await User.find().select('-password').sort({ createdAt: -1 });
-    res.json(users);
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 50;
+    const search = req.query.search || '';
+
+    const query = search
+      ? { $or: [{ name: { $regex: search, $options: 'i' } }, { email: { $regex: search, $options: 'i' } }] }
+      : {};
+
+    const total = await User.countDocuments(query);
+    const users = await User.find(query)
+      .select('-password')
+      .sort({ createdAt: -1 })
+      .skip((page - 1) * limit)
+      .limit(limit);
+
+    res.json(req.query.page ? { users, total, page, pages: Math.ceil(total / limit) } : users);
   } catch (error) {
     res.status(500).json({ message: error.message });
   }

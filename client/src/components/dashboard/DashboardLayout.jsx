@@ -106,6 +106,7 @@ const DashboardLayout = () => {
         <div className="lg:hidden sticky top-0 z-20 flex items-center gap-3 px-4 h-14 bg-white/90 backdrop-blur-xl"
           style={{ borderBottom: '1px solid var(--gray-200)' }}>
           <button onClick={() => setSidebarOpen(true)} style={{ color: 'var(--gray-500)' }}><HiMenu size={24} /></button>
+          <img src="/logo.png" alt="VES" className="w-7 h-7 rounded-lg object-contain" />
           <span className="font-bold flex-1" style={{ color: 'var(--blue-700)' }}>VES</span>
           <NotificationBell />
         </div>

@@ -374,54 +374,6 @@ export { default as AdminEbooks } from './AdminEbooks';
 // ============ ADMIN PROBLEMS (standalone file) ============
 export { default as AdminProblems } from './AdminProblems';
 
-// ============ ADMIN USERS ============
-export const AdminUsers = () => {
-  const [users, setUsers] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const load = () => { adminAPI.getUsers().then(({ data }) => { setUsers(data); setLoading(false); }).catch(() => setLoading(false)); };
-  useEffect(load, []);
+// ============ ADMIN USERS (standalone file) ============
+export { default as AdminUsers } from './AdminUsers';
 
-  const toggleRole = async (userId, currentRole) => {
-    const newRole = currentRole === 'admin' ? 'user' : 'admin';
-    try { await adminAPI.updateRole(userId, newRole); toast.success(`Role changed to ${newRole}`); load(); } catch { toast.error('Failed'); }
-  };
-
-  const deleteUser = async (userId) => {
-    if (!window.confirm('Delete this user?')) return;
-    try { await adminAPI.deleteUser(userId); toast.success('Deleted!'); load(); } catch { toast.error('Failed'); }
-  };
-
-  return (
-    <div className="space-y-6">
-      <h1 className="text-2xl font-bold" style={{ color: 'var(--gray-900)' }}>Manage Users</h1>
-      <div className="bg-white rounded-[16px] overflow-hidden shadow-sm" style={{ border: '1px solid var(--gray-200)' }}>
-        <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead><tr style={{ borderBottom: '1px solid var(--gray-200)' }}>
-              <th className="text-left py-3 px-4 text-xs font-semibold uppercase" style={{ color: 'var(--gray-400)' }}>Name</th>
-              <th className="text-left py-3 px-4 text-xs font-semibold uppercase" style={{ color: 'var(--gray-400)' }}>Email</th>
-              <th className="text-left py-3 px-4 text-xs font-semibold uppercase" style={{ color: 'var(--gray-400)' }}>Role</th>
-              <th className="text-left py-3 px-4 text-xs font-semibold uppercase" style={{ color: 'var(--gray-400)' }}>Actions</th>
-            </tr></thead>
-            <tbody>
-              {users.map((u) => (
-                <tr key={u._id} style={{ borderBottom: '1px solid var(--gray-100)' }} className="hover:bg-gray-50">
-                  <td className="py-3 px-4 text-sm font-medium" style={{ color: 'var(--gray-800)' }}>{u.name}</td>
-                  <td className="py-3 px-4 text-sm" style={{ color: 'var(--gray-500)' }}>{u.email}</td>
-                  <td className="py-3 px-4"><span className={`px-2.5 py-0.5 rounded-full text-xs font-semibold ${u.role === 'admin' ? 'badge-orange' : 'badge-blue'}`} style={{
-                    background: u.role === 'admin' ? 'var(--orange-100)' : 'var(--blue-100)',
-                    color: u.role === 'admin' ? 'var(--orange-600)' : 'var(--blue-700)',
-                  }}>{u.role}</span></td>
-                  <td className="py-3 px-4 flex gap-2">
-                    <button onClick={() => toggleRole(u._id, u.role)} className="text-xs font-semibold px-3 py-1.5 rounded-lg transition-colors hover:bg-blue-50" style={{ color: 'var(--blue-600)' }}>Toggle Role</button>
-                    <button onClick={() => deleteUser(u._id)} className="p-2 rounded-lg hover:bg-red-50 transition-colors text-red-500"><HiTrash /></button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </div>
-    </div>
-  );
-};
